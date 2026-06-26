@@ -20,6 +20,7 @@ export default function Onboarding() {
   );
   const [persona, setPersona] = useState<"socratic" | "example_first">("socratic");
   const [error, setError] = useState<string | null>(null);
+  const [stage, setStage] = useState<string | null>(null);
   const { subject, createRecord, refresh } = useSubject(subjectId);
 
   useEffect(() => {
@@ -35,10 +36,12 @@ export default function Onboarding() {
   if (step === "upload") return (
     <UploadStep
       processing={subject?.status === "processing"}
+      stage={stage}
       error={error}
-      onReset={() => { setSubjectId(null); setError(null); sessionStorage.removeItem("onboarding_subject_id"); }}
+      onReset={() => { setSubjectId(null); setError(null); setStage(null); sessionStorage.removeItem("onboarding_subject_id"); }}
       onSubmit={async ({ name, deadline, text, files, availableDays, durationMins, priorExp }) => {
         setError(null);
+        setStage("creating");
         let s: any;
         try {
           s = await createRecord({
@@ -57,6 +60,7 @@ export default function Onboarding() {
         try {
           const rawFolder = `/subjects/${s.id}/raw`;
           if (files.length > 0) {
+            setStage("uploading");
             try { await (client as any).files.folder.create("raw", { directoryPath: `/subjects/${s.id}/` }); } catch { /* may already exist */ }
             for (const f of files) {
               await (client as any).files.upload(f.file, {
@@ -66,6 +70,7 @@ export default function Onboarding() {
             }
           }
 
+          setStage("processing");
           await (client as any).workflows.run("onboarding", {
             subject_id: s.id,
             material_content: text,
@@ -113,9 +118,10 @@ async function hashText(text: string): Promise<string> {
   return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, "0")).join("");
 }
 
-function UploadStep({ onSubmit, processing, error, onReset }: {
+function UploadStep({ onSubmit, processing, stage, error, onReset }: {
   onSubmit: (d: { name: string; deadline: string; text: string; files: FileItem[]; availableDays: string[]; durationMins: number; priorExp: string }) => Promise<void>;
   processing: boolean;
+  stage: string | null;
   error: string | null;
   onReset: () => void;
 }) {
@@ -138,6 +144,14 @@ function UploadStep({ onSubmit, processing, error, onReset }: {
     });
   }
 
+  const stages = [
+    { key: "creating",    label: "Creating subject..." },
+    { key: "uploading",   label: "Uploading files..." },
+    { key: "processing",  label: "Analysing material..." },
+  ];
+  const currentIdx = stages.findIndex(s => s.key === stage);
+  const progressPct = stage ? ((currentIdx + 1) / stages.length) * 100 : 0;
+
   if (processing) return (
     <div style={centerScreen}>
       {error ? (
@@ -153,14 +167,74 @@ function UploadStep({ onSubmit, processing, error, onReset }: {
           </button>
         </>
       ) : (
-        <>
-          <p style={{ fontFamily: "var(--font-display)", fontSize: "var(--text-24)", fontWeight: "var(--weight-display-bold)", color: "var(--color-text-primary)", marginBottom: "var(--space-3)" }}>
-            Processing your material...
+        <div style={{ width: 360, textAlign: "center" }}>
+          <p style={{ fontFamily: "var(--font-display)", fontSize: "var(--text-20)", fontWeight: "var(--weight-display-bold)", color: "var(--color-text-primary)", marginBottom: "var(--space-6)" }}>
+            Processing your material
           </p>
-          <p style={{ color: "var(--color-text-secondary)", fontSize: "var(--text-15)" }}>
-            Identifying topics and building your landscape
+
+          {/* Progress bar */}
+          <div style={{
+            height: 4,
+            background: "var(--color-bg-elevated)",
+            borderRadius: "var(--radius-full)",
+            overflow: "hidden",
+            marginBottom: "var(--space-6)",
+          }}>
+            <div style={{
+              height: "100%",
+              width: `${progressPct}%`,
+              background: "var(--color-accent)",
+              borderRadius: "var(--radius-full)",
+              transition: "width 600ms var(--ease-settle)",
+              boxShadow: "0 0 12px var(--color-accent-glow)",
+            }} />
+          </div>
+
+          {/* Stage labels */}
+          <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-3)", textAlign: "left" }}>
+            {stages.map((s, i) => {
+              const done = i < currentIdx;
+              const active = i === currentIdx;
+              const pending = i > currentIdx;
+              return (
+                <div key={s.key} style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "var(--space-3)",
+                  opacity: pending ? 0.35 : 1,
+                  transition: "opacity 400ms var(--ease-out)",
+                }}>
+                  <span style={{
+                    width: 20, height: 20, borderRadius: "var(--radius-full)",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    fontSize: "var(--text-11)", flexShrink: 0,
+                    background: done ? "var(--color-success)" : active ? "var(--color-accent)" : "var(--color-bg-elevated)",
+                    border: active ? "none" : "1px solid var(--color-border)",
+                    color: done || active ? "#fff" : "var(--color-text-tertiary)",
+                    fontWeight: "var(--weight-body-bold)",
+                    transition: "background 400ms var(--ease-out), border-color 400ms var(--ease-out)",
+                  }}>
+                    {done ? "\u2713" : active ?
+                      <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#fff", animation: "pulse 1s ease-in-out infinite" }} /> :
+                      i + 1}
+                  </span>
+                  <span style={{
+                    fontSize: "var(--text-13)",
+                    color: active ? "var(--color-text-primary)" : "var(--color-text-secondary)",
+                    fontWeight: active ? "var(--weight-body-medium)" : "var(--weight-body-regular)",
+                    transition: "color 400ms var(--ease-out)",
+                  }}>
+                    {s.label}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+
+          <p style={{ fontFamily: "var(--font-display)", fontSize: "var(--text-17)", fontWeight: "var(--weight-display-medium)", color: "var(--color-accent-text)", marginTop: "var(--space-8)", fontStyle: "italic" }}>
+            This won't take long
           </p>
-        </>
+        </div>
       )}
     </div>
   );
