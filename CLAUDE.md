@@ -223,3 +223,68 @@ git push -u origin main
 2. **Context bloat across sessions** — resolved: Note Banker writes session-notes + updates profile.md; build_session_context injects relevant history
 3. **Teaching persona chatbot names** — TBD when personas finalised.
 4. **Additional sidebar tabs** — Home and Learning confirmed. Others TBD.
+
+---
+
+## Current Project Status (updated 2026-06-26)
+
+### Live
+- **Lemma Pod**: `019f0438-7cc1-73e4-839a-d178cab4d79a` (gappy-ai)
+- **Lemma App**: `https://babel.apps.lemma.work`
+- **Backend**: 7 tables · 10 functions · 4 agents · 3 workflows · 2 personas — all deployed and live
+- **Frontend**: 12 components · 6 pages · Design system with Library/Session themes
+
+### Deploy Commands
+```bash
+# Local dev (with Vite proxy for CORS)
+cd frontend && npm run dev
+
+# Production deploy (Lemma App)
+cd frontend && npm run build
+echo y | lemma app deploy babel --pod 019f0438-7cc1-73e4-839a-d178cab4d79a --source-dir dist
+```
+
+### Lemma SDK Call Patterns (verified against SDK v0.5.2)
+```ts
+// Records
+client.records.list(table, { filters: [...], limit: N })
+client.records.get(table, id)
+client.records.create(table, data)
+client.records.update(table, id, data)
+
+// Files
+client.files.upload(blob, { name, directoryPath })
+client.files.folder.create(name, { directoryPath })
+client.files.download(path)  // returns Blob
+
+// Functions
+client.functions.run(name, { input: { ... } })
+
+// Conversations
+client.conversations.create({ agent_name, instructions })
+client.conversations.messages.list(conversationId)  // returns { items: [...] }
+client.conversations.messages.send(conversationId, { content: text })
+
+// Workflows (FORM start type)
+const run = await client.workflows.runs.create(workflowName)
+await client.workflows.runs.submitForm(run.id, { inputs: { ... }, node_id: run.active_wait!.node_id })
+```
+
+### Client Configuration
+```ts
+// Production (Lemma App): window.__LEMMA_CONFIG__ injected at serve time
+// Local dev: VITE_LEMMA_* env vars from .env
+const client = new LemmaClient({
+  apiUrl: (window as any).__LEMMA_CONFIG__?.apiUrl || import.meta.env.VITE_LEMMA_API_URL,
+  authUrl: (window as any).__LEMMA_CONFIG__?.authUrl || import.meta.env.VITE_LEMMA_AUTH_URL,
+  podId: (window as any).__LEMMA_CONFIG__?.podId || import.meta.env.VITE_LEMMA_POD_ID,
+});
+```
+
+### What Needs Doing
+1. Assign LLM models to agents at lemma.work (if not done)
+2. Populate test data in the pod
+3. Test the full demo loop: upload → structural pass → landscape → trial session → recall check → learner model
+4. Set up GitHub remote and push
+5. Add loading/empty/error states to pages that lack them (Home, Learning, ChatWindow, LandscapeGraph)
+6. Replace hardcoded `availableDays` and `durationMins` with user-facing controls
