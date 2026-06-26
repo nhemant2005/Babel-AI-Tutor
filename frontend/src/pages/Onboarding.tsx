@@ -19,7 +19,6 @@ export default function Onboarding() {
     if (subjectId) sessionStorage.setItem("onboarding_subject_id", subjectId);
   }, [subjectId]);
 
-  // Poll for processing completion
   useEffect(() => {
     if (subject?.status !== "processing") return;
     const interval = setInterval(refresh, 2000);
@@ -37,7 +36,6 @@ export default function Onboarding() {
           prior_experience: priorExp,
         });
         setSubjectId(s.id);
-        // Start onboarding workflow
         await (client as any).workflows.run("onboarding", {
           subject_id: s.id,
           material_content: text,
@@ -91,41 +89,50 @@ function UploadStep({ onSubmit, processing }: {
   const [submitting, setSubmitting] = useState(false);
 
   if (processing) return (
-    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: "100vh", gap: "1rem" }}>
-      <div style={{ fontSize: "1.5rem", fontWeight: 600 }}>Processing your material...</div>
-      <div style={{ color: "#6b7280" }}>Identifying topics and building your landscape</div>
+    <div style={centerScreen}>
+      <p style={{ fontFamily: "var(--font-display)", fontSize: "var(--text-24)", fontWeight: "var(--weight-display-bold)", color: "var(--color-text-primary)", marginBottom: "var(--space-3)" }}>
+        Processing your material...
+      </p>
+      <p style={{ color: "var(--color-text-secondary)", fontSize: "var(--text-15)" }}>
+        Identifying topics and building your landscape
+      </p>
     </div>
   );
 
   return (
-    <div style={{ maxWidth: 640, margin: "0 auto", padding: "3rem 1.5rem" }}>
-      <h1 style={{ marginBottom: "0.5rem" }}>What are you studying?</h1>
-      <p style={{ color: "#6b7280", marginBottom: "2rem" }}>Upload your material and we'll build a learning landscape for you.</p>
+    <div style={{ maxWidth: 640, margin: "0 auto", padding: "var(--space-12) var(--space-6)" }}>
+      <h1 style={{ fontFamily: "var(--font-display)", fontSize: "var(--text-32)", fontWeight: "var(--weight-display-bold)", color: "var(--color-text-primary)", lineHeight: 1.15, marginBottom: "var(--space-2)" }}>
+        What are you studying?
+      </h1>
+      <p style={{ color: "var(--color-text-secondary)", fontSize: "var(--text-15)", marginBottom: "var(--space-8)" }}>
+        Upload your material and we'll build a learning landscape for you.
+      </p>
 
-      <label style={{ display: "block", marginBottom: "1.25rem" }}>
-        <span style={{ fontSize: "0.875rem", fontWeight: 500, display: "block", marginBottom: 4 }}>Subject name</span>
+      <label style={labelStyle}>
+        <span style={labelTextStyle}>Subject name</span>
         <input value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Organic Chemistry" style={inputStyle} />
       </label>
 
-      <label style={{ display: "block", marginBottom: "1.25rem" }}>
-        <span style={{ fontSize: "0.875rem", fontWeight: 500, display: "block", marginBottom: 4 }}>Exam / deadline (optional)</span>
+      <label style={labelStyle}>
+        <span style={labelTextStyle}>Exam / deadline (optional)</span>
         <input type="date" value={deadline} onChange={e => setDeadline(e.target.value)} style={inputStyle} />
       </label>
 
-      <label style={{ display: "block", marginBottom: "1.25rem" }}>
-        <span style={{ fontSize: "0.875rem", fontWeight: 500, display: "block", marginBottom: 4 }}>Prior experience (optional)</span>
+      <label style={labelStyle}>
+        <span style={labelTextStyle}>Prior experience (optional)</span>
         <input value={priorExp} onChange={e => setPriorExp(e.target.value)} placeholder="e.g. I've done high school chemistry" style={inputStyle} />
       </label>
 
-      <label style={{ display: "block", marginBottom: "1.5rem" }}>
-        <span style={{ fontSize: "0.875rem", fontWeight: 500, display: "block", marginBottom: 4 }}>Paste your material</span>
+      <label style={{ display: "block", marginBottom: "var(--space-6)" }}>
+        <span style={labelTextStyle}>Paste your material</span>
         <textarea value={text} onChange={e => setText(e.target.value)} rows={10} placeholder="Paste notes, textbook excerpts, or paste text from a PDF..." style={{ ...inputStyle, resize: "vertical", fontFamily: "inherit" }} />
       </label>
 
       <button
         disabled={!name || !text || submitting}
         onClick={async () => { setSubmitting(true); await onSubmit({ name, deadline, text, availableDays: ["monday", "tuesday", "wednesday", "thursday", "friday"], durationMins: 60, priorExp }); }}
-        style={{ width: "100%", padding: "12px", background: (!name || !text) ? "#d1d5db" : "#4f46e5", color: "#fff", border: "none", borderRadius: 8, fontSize: "1rem", cursor: (!name || !text) ? "not-allowed" : "pointer" }}
+        className="btn-primary"
+        style={{ width: "100%", opacity: (!name || !text) ? 0.4 : 1 }}
       >
         {submitting ? "Uploading..." : "Build my landscape"}
       </button>
@@ -135,17 +142,21 @@ function UploadStep({ onSubmit, processing }: {
 
 function PersonaStep({ onSelect }: { onSelect: (p: "socratic" | "example_first") => void }) {
   return (
-    <div style={{ maxWidth: 560, margin: "0 auto", padding: "3rem 1.5rem" }}>
-      <h1 style={{ marginBottom: "0.5rem" }}>How do you like to learn?</h1>
-      <p style={{ color: "#6b7280", marginBottom: "2rem" }}>Your tutor will adapt to your preference. You can switch later.</p>
-      <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-        <button onClick={() => onSelect("socratic")} style={personaCardStyle}>
-          <strong>Socratic</strong>
-          <span style={{ color: "#6b7280", fontSize: "0.875rem", marginTop: 4 }}>The tutor asks questions to help you discover answers yourself.</span>
+    <div style={{ maxWidth: 560, margin: "0 auto", padding: "var(--space-12) var(--space-6)" }}>
+      <h1 style={{ fontFamily: "var(--font-display)", fontSize: "var(--text-32)", fontWeight: "var(--weight-display-bold)", color: "var(--color-text-primary)", lineHeight: 1.15, marginBottom: "var(--space-2)" }}>
+        How do you like to learn?
+      </h1>
+      <p style={{ color: "var(--color-text-secondary)", fontSize: "var(--text-15)", marginBottom: "var(--space-8)" }}>
+        Your tutor will adapt to your preference. You can switch later.
+      </p>
+      <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-4)" }}>
+        <button onClick={() => onSelect("socratic")} className="glass" style={personaCardStyle}>
+          <span style={{ fontFamily: "var(--font-display)", fontSize: "var(--text-17)", fontWeight: "var(--weight-display-bold)", color: "var(--color-text-primary)" }}>Socratic</span>
+          <span style={{ color: "var(--color-text-secondary)", fontSize: "var(--text-14)", marginTop: "var(--space-1)" }}>The tutor asks questions to help you discover answers yourself.</span>
         </button>
-        <button onClick={() => onSelect("example_first")} style={personaCardStyle}>
-          <strong>Example First</strong>
-          <span style={{ color: "#6b7280", fontSize: "0.875rem", marginTop: 4 }}>Concrete examples before abstract theory. Intuition first.</span>
+        <button onClick={() => onSelect("example_first")} className="glass" style={personaCardStyle}>
+          <span style={{ fontFamily: "var(--font-display)", fontSize: "var(--text-17)", fontWeight: "var(--weight-display-bold)", color: "var(--color-text-primary)" }}>Example First</span>
+          <span style={{ color: "var(--color-text-secondary)", fontSize: "var(--text-14)", marginTop: "var(--space-1)" }}>Concrete examples before abstract theory. Intuition first.</span>
         </button>
       </div>
     </div>
@@ -174,18 +185,20 @@ function TrialSessionStep({ subjectId, persona, onComplete }: { subjectId: strin
   }, [subjectId, persona]);
 
   if (!conversationId) return (
-    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "100vh" }}>
-      <div>Starting your trial session...</div>
+    <div style={centerScreen}>
+      <p style={{ color: "var(--color-text-secondary)", fontSize: "var(--text-15)" }}>
+        Starting your trial session...
+      </p>
     </div>
   );
 
   return (
-    <div style={{ maxWidth: 680, margin: "0 auto", padding: "2rem", height: "100vh", display: "flex", flexDirection: "column" }}>
+    <div style={{ maxWidth: 680, margin: "0 auto", padding: "var(--space-8)", height: "100vh", display: "flex", flexDirection: "column" }}>
       <div style={{ flex: 1 }}>
         <ChatWindow conversationId={conversationId} mode={mode} />
       </div>
-      <button onClick={onComplete} style={{ marginTop: "1rem", padding: "10px", background: "#4f46e5", color: "#fff", border: "none", borderRadius: 8, cursor: "pointer" }}>
-        Continue to your landscape →
+      <button onClick={onComplete} className="btn-primary" style={{ marginTop: "var(--space-4)" }}>
+        Continue to your landscape &rarr;
       </button>
     </div>
   );
@@ -193,24 +206,66 @@ function TrialSessionStep({ subjectId, persona, onComplete }: { subjectId: strin
 
 function LandscapeRevealStep({ subjectId, onDone }: { subjectId: string; onDone: () => void }) {
   return (
-    <div style={{ padding: "2rem" }}>
-      <h1 style={{ marginBottom: "0.5rem" }}>Your learning landscape</h1>
-      <p style={{ color: "#6b7280", marginBottom: "1.5rem" }}>Here's how your material breaks down. Click any topic to adjust.</p>
+    <div style={{ padding: "var(--space-8)" }}>
+      <h1 style={{ fontFamily: "var(--font-display)", fontSize: "var(--text-32)", fontWeight: "var(--weight-display-bold)", color: "var(--color-text-primary)", lineHeight: 1.15, marginBottom: "var(--space-2)" }}>
+        Your learning landscape
+      </h1>
+      <p style={{ color: "var(--color-text-secondary)", fontSize: "var(--text-15)", marginBottom: "var(--space-6)" }}>
+        Here's how your material breaks down. Click any topic to adjust.
+      </p>
       <LandscapeGraph subjectId={subjectId} onTopicClick={() => {}} />
-      <button onClick={onDone} style={{ marginTop: "1.5rem", padding: "12px 32px", background: "#4f46e5", color: "#fff", border: "none", borderRadius: 8, cursor: "pointer", fontSize: "1rem" }}>
-        Start learning →
+      <button onClick={onDone} className="btn-primary" style={{ marginTop: "var(--space-6)" }}>
+        Start learning &rarr;
       </button>
     </div>
   );
 }
 
+const centerScreen: React.CSSProperties = {
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+  justifyContent: "center",
+  minHeight: "100vh",
+};
+
+const labelStyle: React.CSSProperties = {
+  display: "block",
+  marginBottom: "var(--space-5)",
+};
+
+const labelTextStyle: React.CSSProperties = {
+  fontSize: "var(--text-13)",
+  fontWeight: "var(--weight-body-medium)",
+  display: "block",
+  marginBottom: "var(--space-1)",
+  color: "var(--color-text-secondary)",
+  fontFamily: "var(--font-body)",
+};
+
 const inputStyle: React.CSSProperties = {
-  width: "100%", padding: "8px 12px", border: "1px solid #d1d5db",
-  borderRadius: 6, fontSize: 14, outline: "none", boxSizing: "border-box",
+  width: "100%",
+  padding: "var(--space-2) var(--space-3)",
+  border: "1px solid var(--color-border)",
+  borderRadius: "var(--radius-sm)",
+  fontSize: "var(--text-14)",
+  color: "var(--color-text-primary)",
+  background: "var(--color-bg-elevated)",
+  outline: "none",
+  boxSizing: "border-box",
+  fontFamily: "var(--font-body)",
+  transition: "border-color 150ms var(--ease-out)",
 };
 
 const personaCardStyle: React.CSSProperties = {
-  display: "flex", flexDirection: "column", alignItems: "flex-start",
-  padding: "1.25rem", background: "#fff", border: "2px solid #e5e7eb",
-  borderRadius: 10, cursor: "pointer", textAlign: "left",
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "flex-start",
+  padding: "var(--space-6)",
+  borderRadius: "var(--radius-md)",
+  cursor: "pointer",
+  textAlign: "left",
+  border: "2px solid transparent",
+  width: "100%",
+  transition: "border-color 150ms var(--ease-out)",
 };

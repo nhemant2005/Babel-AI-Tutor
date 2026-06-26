@@ -8,23 +8,37 @@ interface TopicNodeData {
 
 export default function TopicNode({ id, data }: { id: string; data: TopicNodeData }) {
   const statusColor: Record<string, string> = {
-    not_started: "#e5e7eb",
-    in_progress: "#fbbf24",
-    complete: "#34d399",
+    not_started: "var(--color-bg-subtle)",
+    in_progress: "var(--color-warning)",
+    complete: "var(--color-success)",
+  };
+
+  const statusBorder: Record<string, string> = {
+    not_started: "var(--color-border)",
+    in_progress: "var(--color-warning)",
+    complete: "var(--color-success)",
   };
 
   return (
     <div
       onClick={() => data.onClick(id)}
       style={{
-        background: statusColor[data.completion_status] ?? "#e5e7eb",
-        border: "2px solid #374151", borderRadius: 8,
-        padding: "8px 16px", cursor: "pointer",
-        minWidth: 120, textAlign: "center",
+        background: statusColor[data.completion_status] ?? "var(--color-bg-subtle)",
+        border: `2px solid ${statusBorder[data.completion_status] ?? "var(--color-border)"}`,
+        borderRadius: "var(--radius-md)",
+        padding: "var(--space-2) var(--space-4)",
+        cursor: "pointer",
+        minWidth: 130,
+        textAlign: "center",
+        fontFamily: "var(--font-display)",
+        fontSize: "var(--text-13)",
+        fontWeight: "var(--weight-display-medium)",
+        color: "var(--color-text-primary)",
+        letterSpacing: "0.02em",
       }}
     >
       <Handle type="target" position={Position.Left} />
-      <div style={{ fontWeight: 600, fontSize: 13 }}>{data.label}</div>
+      <div>{data.label}</div>
       <Handle type="source" position={Position.Right} />
     </div>
   );

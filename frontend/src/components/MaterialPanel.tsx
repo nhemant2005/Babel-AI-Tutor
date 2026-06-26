@@ -14,9 +14,26 @@ export default function MaterialPanel({ subjectId, topicId }: Props) {
   }, [subjectId, topicId]);
 
   return (
-    <div style={{ padding: "1rem", height: "100%", overflowY: "auto" }}>
-      <h3 style={{ margin: "0 0 1rem", fontSize: "0.875rem", color: "#6b7280", textTransform: "uppercase", letterSpacing: "0.05em" }}>Material</h3>
-      <pre style={{ whiteSpace: "pre-wrap", fontSize: 13, color: "#374151", margin: 0 }}>
+    <div style={{ padding: "var(--space-4)", height: "100%", overflowY: "auto" }}>
+      <div style={{
+        fontSize: "var(--text-11)",
+        fontFamily: "var(--font-body)",
+        fontWeight: "var(--weight-body-medium)",
+        color: "var(--color-text-tertiary)",
+        textTransform: "uppercase",
+        letterSpacing: "0.08em",
+        marginBottom: "var(--space-4)",
+      }}>
+        Material
+      </div>
+      <pre style={{
+        whiteSpace: "pre-wrap",
+        fontSize: "var(--text-13)",
+        fontFamily: "var(--font-body)",
+        color: "var(--color-text-secondary)",
+        lineHeight: 1.7,
+        margin: 0,
+      }}>
         {content ?? "Loading..."}
       </pre>
     </div>

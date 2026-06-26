@@ -31,16 +31,42 @@ export default function PomodoroTimer({ sessionId }: { sessionId: string }) {
   const secs = (secondsLeft % 60).toString().padStart(2, "0");
 
   return (
-    <div style={{ textAlign: "center", padding: "1.5rem" }}>
-      <div style={{ fontSize: "0.75rem", color: "#6b7280", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "0.5rem" }}>
+    <div style={{ textAlign: "center", padding: "var(--space-6)" }}>
+      <div style={{
+        fontSize: "var(--text-11)",
+        fontFamily: "var(--font-body)",
+        fontWeight: "var(--weight-body-medium)",
+        color: "var(--color-text-tertiary)",
+        textTransform: "uppercase",
+        letterSpacing: "0.08em",
+        marginBottom: "var(--space-2)",
+      }}>
         {phase === "work" ? "Focus" : "Break"}
       </div>
-      <div style={{ fontSize: "3rem", fontWeight: 700, fontFamily: "monospace", color: "#111827", marginBottom: "1rem" }}>
+      <div style={{
+        fontSize: "var(--text-48)",
+        fontWeight: "var(--weight-body-bold)",
+        fontFamily: "var(--font-body)",
+        color: "var(--color-text-primary)",
+        fontVariantNumeric: "tabular-nums",
+        marginBottom: "var(--space-4)",
+      }}>
         {mins}:{secs}
       </div>
       <button
         onClick={() => setRunning(r => !r)}
-        style={{ padding: "8px 24px", background: running ? "#ef4444" : "#4f46e5", color: "#fff", border: "none", borderRadius: 6, cursor: "pointer", fontSize: 14 }}
+        style={{
+          padding: "var(--space-2) var(--space-6)",
+          background: running ? "var(--color-destructive)" : "var(--color-accent)",
+          color: "#fff",
+          border: "none",
+          borderRadius: "var(--radius-sm)",
+          cursor: "pointer",
+          fontSize: "var(--text-14)",
+          fontFamily: "var(--font-body)",
+          fontWeight: "var(--weight-body-medium)",
+          transition: "background 150ms var(--ease-out)",
+        }}
       >
         {running ? "Pause" : "Start"}
       </button>

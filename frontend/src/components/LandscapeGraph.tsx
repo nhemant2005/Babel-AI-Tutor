@@ -52,13 +52,14 @@ export default function LandscapeGraph({ subjectId, onTopicClick }: LandscapeGra
       source: depId,
       target: topic.id,
       type: "smoothstep",
+      style: { stroke: "var(--color-border)", strokeWidth: 2 },
     }))
   );
 
   return (
-    <div style={{ height: 500 }}>
+    <div style={{ height: 500, borderRadius: "var(--radius-md)", overflow: "hidden", border: "1px solid var(--color-border)" }}>
       <ReactFlow nodes={nodes} edges={edges} nodeTypes={nodeTypes} fitView>
-        <Background />
+        <Background color="var(--color-border-subtle)" gap={20} />
         <Controls />
       </ReactFlow>
     </div>

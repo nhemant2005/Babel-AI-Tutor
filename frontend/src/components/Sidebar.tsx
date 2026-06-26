@@ -1,44 +1,95 @@
 import { Link, useLocation } from "react-router-dom";
-import { Settings } from "lucide-react";
+import { House, BookOpen, Settings2 } from "lucide-react";
 import NotificationBell from "./NotificationBell";
 
 const navItems = [
-  { label: "Home", path: "/home" },
-  { label: "Learning", path: "/learning" },
+  { label: "Home",     path: "/home",     Icon: House },
+  { label: "Learning", path: "/learning", Icon: BookOpen },
 ];
 
 export default function Sidebar() {
   const { pathname } = useLocation();
   return (
     <nav style={{
-      width: 200, minHeight: "100vh", background: "#f9fafb",
-      borderRight: "1px solid #e5e7eb", display: "flex",
-      flexDirection: "column", padding: "1.5rem 1rem",
+      width: "var(--sidebar-width)",
+      minHeight: "100vh",
+      background: "var(--color-bg-surface)",
+      borderRight: "1px solid var(--color-border)",
+      display: "flex",
+      flexDirection: "column",
+      paddingTop: "var(--space-6)",
+      paddingBottom: "var(--space-6)",
+      paddingInline: "var(--space-4)",
+      position: "fixed",
+      left: 0,
+      top: 0,
+      zIndex: 100,
     }}>
-      <div style={{ fontWeight: 700, fontSize: "1.25rem", marginBottom: "2rem", color: "#111827" }}>
-        Gappy
+      {/* Wordmark */}
+      <div style={{
+        fontFamily: "var(--font-display)",
+        fontSize: "var(--text-28)",
+        fontWeight: "var(--weight-display-extrabold)",
+        color: "var(--color-text-primary)",
+        letterSpacing: "0.08em",
+        marginBottom: "var(--space-8)",
+        paddingInline: "var(--space-3)",
+      }}>
+        Babel
       </div>
-      <ul style={{ listStyle: "none", margin: 0, padding: 0, flex: 1 }}>
-        {navItems.map(item => (
-          <li key={item.path} style={{ marginBottom: "0.5rem" }}>
-            <Link
-              to={item.path}
-              style={{
-                display: "block", padding: "8px 12px", borderRadius: 6,
-                textDecoration: "none",
-                color: pathname.startsWith(item.path) ? "#4f46e5" : "#374151",
-                background: pathname.startsWith(item.path) ? "#ede9fe" : "transparent",
-                fontWeight: pathname.startsWith(item.path) ? 600 : 400,
-              }}
-            >
-              {item.label}
-            </Link>
-          </li>
-        ))}
+
+      {/* Nav */}
+      <ul style={{ flex: 1, display: "flex", flexDirection: "column", gap: "var(--space-1)" }}>
+        {navItems.map(({ label, path, Icon }) => {
+          const active = pathname.startsWith(path);
+          return (
+            <li key={path}>
+              <Link to={path} style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "var(--space-3)",
+                padding: "var(--space-2) var(--space-3)",
+                borderRadius: "var(--radius-sm)",
+                fontFamily: "var(--font-display)",
+                fontSize: "var(--text-13)",
+                fontWeight: "var(--weight-display-medium)",
+                letterSpacing: "0.04em",
+                color: active ? "var(--color-accent-text)" : "var(--color-text-secondary)",
+                background: active ? "var(--color-accent-subtle)" : "transparent",
+                transition: "background 150ms var(--ease-out), color 150ms var(--ease-out)",
+              }}>
+                <Icon size={16} strokeWidth={active ? 2 : 1.5} />
+                {label}
+              </Link>
+            </li>
+          );
+        })}
       </ul>
-      <div style={{ display: "flex", gap: "1rem", alignItems: "center", paddingTop: "1rem", borderTop: "1px solid #e5e7eb" }}>
+
+      {/* Bottom icons */}
+      <div style={{
+        display: "flex",
+        flexDirection: "column",
+        gap: "var(--space-2)",
+        paddingTop: "var(--space-4)",
+        borderTop: "1px solid var(--color-border)",
+      }}>
         <NotificationBell />
-        <Link to="/settings" style={{ color: "#6b7280" }}><Settings size={20} /></Link>
+        <Link to="/settings" style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          width: 36,
+          height: 36,
+          borderRadius: "var(--radius-sm)",
+          color: "var(--color-text-tertiary)",
+          transition: "color 150ms var(--ease-out), background 150ms var(--ease-out)",
+        }}
+          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = "var(--color-text-primary)"; (e.currentTarget as HTMLElement).style.background = "var(--color-bg-subtle)"; }}
+          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = "var(--color-text-tertiary)"; (e.currentTarget as HTMLElement).style.background = "transparent"; }}
+        >
+          <Settings2 size={18} strokeWidth={1.5} />
+        </Link>
       </div>
     </nav>
   );

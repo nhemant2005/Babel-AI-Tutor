@@ -31,24 +31,40 @@ export default function Home() {
   }, [today]);
 
   return (
-    <div style={{ padding: "2rem" }}>
-      <h1 style={{ margin: "0 0 1.5rem", fontSize: "1.5rem", fontWeight: 700 }}>Today</h1>
+    <div style={{ padding: "var(--space-8)" }}>
+      <h1 style={{
+        fontFamily: "var(--font-display)",
+        fontSize: "var(--text-28)",
+        fontWeight: "var(--weight-display-bold)",
+        color: "var(--color-text-primary)",
+        marginBottom: "var(--space-6)",
+      }}>
+        Today
+      </h1>
       {!todaysPlan.length ? (
-        <p style={{ color: "#6b7280" }}>Nothing scheduled for today.</p>
+        <p style={{ color: "var(--color-text-secondary)", fontSize: "var(--text-15)" }}>
+          Nothing scheduled for today.
+        </p>
       ) : (
-        <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+        <ul style={{ display: "flex", flexDirection: "column", gap: "var(--space-3)" }}>
           {todaysPlan.map((item: any) => (
             <li key={item.id}>
               <Link
                 to={`/subjects/${item.subject_id}/session?topic=${item.topic_id}`}
+                className="glass"
                 style={{
-                  display: "block", padding: "1rem 1.25rem", background: "#fff",
-                  border: "1px solid #e5e7eb", borderRadius: 8, textDecoration: "none",
-                  color: "#111827",
+                  display: "block",
+                  padding: "var(--space-4) var(--space-5)",
+                  borderRadius: "var(--radius-md)",
+                  transition: "border-color 150ms var(--ease-out)",
                 }}
               >
-                <div style={{ fontWeight: 600 }}>{topics[item.topic_id]?.name ?? item.topic_id}</div>
-                <div style={{ fontSize: "0.875rem", color: "#6b7280", marginTop: 4 }}>{item.duration_mins} min</div>
+                <div style={{ fontFamily: "var(--font-display)", fontSize: "var(--text-15)", fontWeight: "var(--weight-display-medium)", color: "var(--color-text-primary)" }}>
+                  {topics[item.topic_id]?.name ?? item.topic_id}
+                </div>
+                <div style={{ fontSize: "var(--text-13)", color: "var(--color-text-tertiary)", marginTop: "var(--space-1)" }}>
+                  {item.duration_mins} min
+                </div>
               </Link>
             </li>
           ))}

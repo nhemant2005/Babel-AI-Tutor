@@ -13,28 +13,54 @@ export default function Learning() {
   }, []);
 
   return (
-    <div style={{ padding: "2rem" }}>
-      <h1 style={{ margin: "0 0 1.5rem", fontSize: "1.5rem", fontWeight: 700 }}>Learning</h1>
-      <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+    <div style={{ padding: "var(--space-8)" }}>
+      <h1 style={{
+        fontFamily: "var(--font-display)",
+        fontSize: "var(--text-28)",
+        fontWeight: "var(--weight-display-bold)",
+        color: "var(--color-text-primary)",
+        marginBottom: "var(--space-6)",
+      }}>
+        Learning
+      </h1>
+      <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-3)" }}>
         {subjects.map((s: any) => (
           <Link
             key={s.id}
             to={`/subjects/${s.id}`}
             style={{
-              display: "block", padding: "1rem 1.25rem", background: "#fff",
-              borderLeft: `4px solid ${s.color ?? "#6366f1"}`,
-              border: "1px solid #e5e7eb", borderRadius: 8,
-              textDecoration: "none", color: "#111827",
+              display: "block",
+              padding: "var(--space-4) var(--space-5)",
+              background: "var(--color-bg-surface)",
+              borderLeft: `4px solid ${s.color ?? "var(--color-accent)"}`,
+              borderTop: "1px solid var(--color-border)",
+              borderRight: "1px solid var(--color-border)",
+              borderBottom: "1px solid var(--color-border)",
+              borderRadius: "var(--radius-md)",
+              transition: "border-color 150ms var(--ease-out)",
             }}
           >
-            <h2 style={{ margin: 0, fontSize: "1rem", fontWeight: 600 }}>{s.name}</h2>
-            {s.deadline && <p style={{ margin: "4px 0 0", fontSize: "0.875rem", color: "#6b7280" }}>Due: {s.deadline}</p>}
+            <h2 style={{
+              fontFamily: "var(--font-display)",
+              fontSize: "var(--text-16)",
+              fontWeight: "var(--weight-display-medium)",
+              color: "var(--color-text-primary)",
+              margin: 0,
+            }}>
+              {s.name}
+            </h2>
+            {s.deadline && (
+              <p style={{ marginTop: "var(--space-1)", fontSize: "var(--text-13)", color: "var(--color-text-tertiary)" }}>
+                Due: {s.deadline}
+              </p>
+            )}
           </Link>
         ))}
       </div>
       <Link
         to="/onboarding"
-        style={{ display: "inline-block", marginTop: "1.5rem", color: "#4f46e5", textDecoration: "none", fontWeight: 500 }}
+        className="btn-ghost"
+        style={{ display: "inline-flex", marginTop: "var(--space-6)" }}
       >
         + Add subject
       </Link>

@@ -9,9 +9,11 @@ import Sidebar from "./components/Sidebar";
 
 function Layout({ children }: { children: React.ReactNode }) {
   return (
-    <div style={{ display: "flex", minHeight: "100vh" }}>
+    <div style={{ display: "flex", minHeight: "100vh", background: "var(--color-bg-base)" }}>
       <Sidebar />
-      <main style={{ flex: 1, background: "#f9fafb" }}>{children}</main>
+      <main style={{ flex: 1, marginLeft: "var(--sidebar-width)", minHeight: "100vh" }}>
+        {children}
+      </main>
     </div>
   );
 }

@@ -14,7 +14,6 @@ export default function SubjectPage() {
 
   async function handleTopicClick(topicId: string, topicName: string) {
     if (prereqShown) {
-      // Already shown once — navigate directly
       navigate(`/subjects/${id}/session?topic=${topicId}`);
       return;
     }
@@ -34,7 +33,7 @@ export default function SubjectPage() {
   }
 
   return (
-    <div style={{ padding: "1.5rem" }}>
+    <div style={{ padding: "var(--space-6)" }}>
       <LandscapeGraph subjectId={id!} onTopicClick={handleTopicClick} />
       {pendingTopicId && (
         <InformedConsequenceModal

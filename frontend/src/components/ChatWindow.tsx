@@ -41,41 +41,82 @@ export default function ChatWindow({ conversationId, mode }: Props) {
   }
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-      <div style={{ padding: "0.5rem 1rem", borderBottom: "1px solid #e5e7eb", fontSize: "0.75rem", color: "#6b7280", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", background: "var(--color-bg-base)" }}>
+      <div style={{
+        padding: "var(--space-2) var(--space-4)",
+        borderBottom: "1px solid var(--color-border)",
+        fontSize: "var(--text-11)",
+        fontFamily: "var(--font-body)",
+        fontWeight: "var(--weight-body-medium)",
+        color: "var(--color-text-tertiary)",
+        textTransform: "uppercase",
+        letterSpacing: "0.08em",
+      }}>
         {mode === "teaching" ? "Teaching" : "Recall Check"}
       </div>
-      <div style={{ flex: 1, overflowY: "auto", padding: "1rem", display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+
+      <div style={{
+        flex: 1,
+        overflowY: "auto",
+        padding: "var(--space-4)",
+        display: "flex",
+        flexDirection: "column",
+        gap: "var(--space-3)",
+      }}>
         {messages.map(m => (
           <div key={m.id} style={{
             alignSelf: m.role === "user" ? "flex-end" : "flex-start",
-            background: m.role === "user" ? "#4f46e5" : "#f3f4f6",
-            color: m.role === "user" ? "#fff" : "#111827",
-            borderRadius: 10, padding: "8px 14px", maxWidth: "80%", fontSize: 14,
+            background: m.role === "user" ? "var(--color-accent)" : "var(--color-bg-elevated)",
+            color: m.role === "user" ? "var(--raw-silver-pale)" : "var(--color-text-primary)",
+            borderRadius: "var(--radius-md)",
+            padding: "var(--space-2) var(--space-4)",
+            maxWidth: "80%",
+            fontSize: "var(--text-14)",
+            fontFamily: "var(--font-body)",
+            lineHeight: 1.6,
           }}>
             {m.content}
           </div>
         ))}
         {isLoading && (
-          <div style={{ alignSelf: "flex-start", background: "#f3f4f6", borderRadius: 10, padding: "8px 14px", color: "#9ca3af", fontSize: 14 }}>
+          <div style={{
+            alignSelf: "flex-start",
+            background: "var(--color-bg-elevated)",
+            borderRadius: "var(--radius-md)",
+            padding: "var(--space-2) var(--space-4)",
+            color: "var(--color-text-tertiary)",
+            fontSize: "var(--text-14)",
+          }}>
             ...
           </div>
         )}
         <div ref={bottomRef} />
       </div>
-      <div style={{ display: "flex", gap: "0.5rem", padding: "0.75rem 1rem", borderTop: "1px solid #e5e7eb" }}>
+
+      <div style={{
+        display: "flex",
+        gap: "var(--space-2)",
+        padding: "var(--space-3) var(--space-4)",
+        borderTop: "1px solid var(--color-border)",
+      }}>
         <input
           value={input}
           onChange={e => setInput(e.target.value)}
           onKeyDown={e => e.key === "Enter" && !e.shiftKey && handleSend()}
           placeholder="Type your answer..."
-          style={{ flex: 1, padding: "8px 12px", border: "1px solid #d1d5db", borderRadius: 6, fontSize: 14, outline: "none" }}
+          style={{
+            flex: 1,
+            padding: "var(--space-2) var(--space-3)",
+            border: "1px solid var(--color-border)",
+            borderRadius: "var(--radius-sm)",
+            fontSize: "var(--text-14)",
+            color: "var(--color-text-primary)",
+            background: "var(--color-bg-elevated)",
+            outline: "none",
+            fontFamily: "var(--font-body)",
+          }}
         />
-        <button
-          onClick={handleSend}
-          disabled={isLoading}
-          style={{ padding: "8px 16px", background: "#4f46e5", color: "#fff", border: "none", borderRadius: 6, cursor: "pointer", fontSize: 14 }}
-        >
+        <button onClick={handleSend} disabled={isLoading} className="btn-primary">
           Send
         </button>
       </div>
