@@ -1,0 +1,38 @@
+# Secrets
+.env
+.env.*
+*.env
+
+# Design/planning docs (not implementation)
+docs/superpowers/
+handoff-*.md
+competitor-analysis.md
+lemma-reference.md
+scoped-final-arc.md
+critic-loop-handoff.md
+message.txt
+deprecated/
+
+# Lemma runtime
+.lemma/
+
+# Node / Python
+node_modules/
+__pycache__/
+*.pyc
+*.pyo
+dist/
+build/
+.venv/
+venv/
+
+# SDD scratch
+.superpowers/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
