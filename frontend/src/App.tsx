@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Landing from "./pages/Landing";
 import Onboarding from "./pages/Onboarding";
@@ -6,6 +7,7 @@ import Learning from "./pages/Learning";
 import SubjectPage from "./pages/SubjectPage";
 import StudySession from "./pages/StudySession";
 import Sidebar from "./components/Sidebar";
+import { initClient } from "./lib/client";
 
 function Layout({ children }: { children: React.ReactNode }) {
   return (
@@ -19,6 +21,7 @@ function Layout({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
+  useEffect(() => { initClient().catch(console.error); }, []);
   return (
     <BrowserRouter>
       <Routes>
