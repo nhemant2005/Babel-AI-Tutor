@@ -1,0 +1,10 @@
+{
+  "name": "daily-return-nudge",
+  "schedule_type": "TIME",
+  "config": { "cron": "0 9 * * *" },
+  "workflow_name": null,
+  "agent_name": null,
+  "function_name": "check-return-nudge",
+  "is_active": false,
+  "visibility": "POD"
+}

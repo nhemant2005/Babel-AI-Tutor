@@ -1,0 +1,19 @@
+{
+  "name": "tutor-agent",
+  "description": "The teaching conversation agent. Handles trial sessions, regular sessions, and in-session recall checks. Uses soul.md persona + student profile + topic context.",
+  "instruction": { "$file": "instruction.md" },
+  "toolsets": ["POD"],
+  "visibility": "POD",
+  "permissions": { "grants": [
+    { "resource_type": "datastore_table", "resource_name": "learner_model",
+      "permission_ids": ["datastore.table.read", "datastore.record.read"] },
+    { "resource_type": "datastore_table", "resource_name": "sessions",
+      "permission_ids": ["datastore.table.read", "datastore.record.read"] },
+    { "resource_type": "file_path", "resource_name": "/tutor/",
+      "permission_ids": ["file.read"] },
+    { "resource_type": "file_path", "resource_name": "/student/",
+      "permission_ids": ["file.read"] },
+    { "resource_type": "file_path", "resource_name": "/subjects/",
+      "permission_ids": ["file.read"] }
+  ] }
+}

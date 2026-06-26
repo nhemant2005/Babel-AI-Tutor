@@ -1,0 +1,50 @@
+{
+  "name": "session-end",
+  "description": "Triggered when a study session ends (natural or abandoned). Runs Note Banker, updates pomodoro, sends notification.",
+  "start": { "type": "MANUAL" },
+  "visibility": "POD",
+  "nodes": [
+    {
+      "id": "intake",
+      "type": "FORM",
+      "label": "Intake",
+      "config": {
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "session_id": { "type": "string" },
+            "topic_id": { "type": "string" },
+            "subject_id": { "type": "string" },
+            "exit_type": { "type": "string" },
+            "conversation_summary": { "type": "string" }
+          },
+          "required": ["session_id", "topic_id", "subject_id", "exit_type", "conversation_summary"]
+        }
+      }
+    },
+    {
+      "id": "bank_notes",
+      "type": "AGENT",
+      "label": "Note Banker",
+      "config": {
+        "agent_name": "note-banker-agent",
+        "input_mapping": {
+          "session_id": { "type": "expression", "value": "intake.session_id" },
+          "topic_id": { "type": "expression", "value": "intake.topic_id" },
+          "subject_id": { "type": "expression", "value": "intake.subject_id" },
+          "exit_type": { "type": "expression", "value": "intake.exit_type" },
+          "conversation_summary": { "type": "expression", "value": "intake.conversation_summary" }
+        }
+      }
+    },
+    {
+      "id": "end",
+      "type": "END",
+      "label": "Done"
+    }
+  ],
+  "edges": [
+    { "id": "e1", "source": "intake", "target": "bank_notes" },
+    { "id": "e2", "source": "bank_notes", "target": "end" }
+  ]
+}

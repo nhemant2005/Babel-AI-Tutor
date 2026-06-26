@@ -1,0 +1,11 @@
+{
+  "name": "cache-lookup",
+  "description": "Look up a content hash in content_cache. Returns output_path if hit, null if miss.",
+  "type": "API",
+  "visibility": "POD",
+  "code": { "$file": "code.py" },
+  "permissions": { "grants": [
+    { "resource_type": "datastore_table", "resource_name": "content_cache",
+      "permission_ids": ["datastore.table.read", "datastore.record.read"] }
+  ] }
+}

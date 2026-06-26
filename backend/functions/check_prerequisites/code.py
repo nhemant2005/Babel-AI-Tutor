@@ -1,0 +1,22 @@
+from lemma_sdk import Pod
+
+def run(topic_id: str) -> dict:
+    pod = Pod.from_env()
+    topic = pod.records.get("topics", topic_id)
+    dep_ids = topic.get("dependency_ids") or []
+    if not dep_ids:
+        return {"unmet": [], "all_met": True}
+
+    unmet = []
+    for dep_id in dep_ids:
+        lm_results = pod.records.list(
+            "learner_model",
+            filter=[{"field": "topic_id", "op": "eq", "value": dep_id}],
+            limit=1,
+        )
+        items = lm_results.to_dict().get("items", [])
+        if not items or not items[0].get("prerequisite_met"):
+            dep_topic = pod.records.get("topics", dep_id)
+            unmet.append(dep_topic.get("name", dep_id))
+
+    return {"unmet": unmet, "all_met": len(unmet) == 0}

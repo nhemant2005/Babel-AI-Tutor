@@ -1,0 +1,8 @@
+{
+  "name": "check-context-length",
+  "description": "Check if a conversation is approaching context window limits. Returns needs_compression bool.",
+  "type": "API",
+  "visibility": "POD",
+  "code": { "$file": "code.py" },
+  "permissions": { "grants": [] }
+}

@@ -1,0 +1,8 @@
+{
+  "name": "hash-content",
+  "description": "Compute SHA-256 hash of a string. Used to fingerprint uploaded material before cache lookup.",
+  "type": "API",
+  "visibility": "POD",
+  "code": { "$file": "code.py" },
+  "permissions": { "grants": [] }
+}

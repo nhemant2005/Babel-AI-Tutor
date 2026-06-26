@@ -1,0 +1,16 @@
+﻿{
+  "name": "sessions",
+  "primary_key_column": "id",
+  "enable_rls": false,
+  "visibility": "POD",
+  "columns": [
+    { "name": "topic_id", "type": "UUID", "required": true, "foreign_key": { "references": "topics.id" } },
+    { "name": "subject_id", "type": "UUID", "required": true, "foreign_key": { "references": "subjects.id" } },
+    { "name": "started_at", "type": "DATETIME", "required": true },
+    { "name": "ended_at", "type": "DATETIME", "required": false },
+    { "name": "recall_score", "type": "INTEGER", "required": false },
+    { "name": "pomodoro_cycles", "type": "INTEGER", "required": false, "default": 0 },
+    { "name": "exit_type", "type": "ENUM", "required": false, "options": ["natural", "abandoned"] }
+  ],
+  "config": {}
+}

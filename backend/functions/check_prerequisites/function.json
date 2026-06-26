@@ -1,0 +1,13 @@
+{
+  "name": "check-prerequisites",
+  "description": "Return unmet prerequisite topic names for a given topic. Drives the informed-consequence check popup.",
+  "type": "API",
+  "visibility": "POD",
+  "code": { "$file": "code.py" },
+  "permissions": { "grants": [
+    { "resource_type": "datastore_table", "resource_name": "topics",
+      "permission_ids": ["datastore.table.read", "datastore.record.read"] },
+    { "resource_type": "datastore_table", "resource_name": "learner_model",
+      "permission_ids": ["datastore.table.read", "datastore.record.read"] }
+  ] }
+}

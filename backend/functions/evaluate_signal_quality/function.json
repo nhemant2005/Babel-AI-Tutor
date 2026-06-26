@@ -1,0 +1,8 @@
+{
+  "name": "evaluate-signal-quality",
+  "description": "Detect thin or evasive student responses. Returns thin/sufficient.",
+  "type": "API",
+  "visibility": "POD",
+  "code": { "$file": "code.py" },
+  "permissions": { "grants": [] }
+}

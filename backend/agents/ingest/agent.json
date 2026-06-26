@@ -1,0 +1,15 @@
+{
+  "name": "ingest-agent",
+  "description": "Processes uploaded study material: structural pass extracts topics and source notes; deep processing generates teaching-ready per-topic content.",
+  "instruction": { "$file": "instruction.md" },
+  "toolsets": ["POD"],
+  "visibility": "POD",
+  "permissions": { "grants": [
+    { "resource_type": "datastore_table", "resource_name": "topics",
+      "permission_ids": ["datastore.table.read", "datastore.record.write"] },
+    { "resource_type": "datastore_table", "resource_name": "subjects",
+      "permission_ids": ["datastore.table.read", "datastore.record.write"] },
+    { "resource_type": "file_path", "resource_name": "/subjects/",
+      "permission_ids": ["file.read", "file.write"] }
+  ] }
+}

@@ -1,0 +1,81 @@
+{
+  "name": "deep-processing",
+  "description": "Triggered on topic node click. Generates rich per-topic teaching content. Cache-first.",
+  "start": { "type": "MANUAL" },
+  "visibility": "POD",
+  "nodes": [
+    {
+      "id": "intake",
+      "type": "FORM",
+      "label": "Intake",
+      "config": {
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "subject_id": { "type": "string" },
+            "topic_id": { "type": "string" },
+            "topic_name": { "type": "string" },
+            "material_hash": { "type": "string" }
+          },
+          "required": ["subject_id", "topic_id", "topic_name", "material_hash"]
+        }
+      }
+    },
+    {
+      "id": "cache_check",
+      "type": "FUNCTION",
+      "label": "Check Cache",
+      "config": {
+        "function_name": "cache-lookup",
+        "input_mapping": {
+          "cache_key": { "type": "expression", "value": "intake.material_hash" },
+          "cache_type": { "type": "literal", "value": "deep_processing" }
+        }
+      }
+    },
+    {
+      "id": "cache_decision",
+      "type": "DECISION",
+      "label": "Cache Hit?",
+      "config": { "condition": "cache_check.hit == true" }
+    },
+    {
+      "id": "run_deep",
+      "type": "AGENT",
+      "label": "Deep Processing",
+      "config": {
+        "agent_name": "ingest-agent",
+        "input_mapping": {
+          "mode": { "type": "literal", "value": "deep_processing" },
+          "topic_name": { "type": "expression", "value": "intake.topic_name" },
+          "subject_id": { "type": "expression", "value": "intake.subject_id" },
+          "topic_id": { "type": "expression", "value": "intake.topic_id" }
+        }
+      }
+    },
+    {
+      "id": "write_cache",
+      "type": "FUNCTION",
+      "label": "Write Cache",
+      "config": {
+        "function_name": "cache-write",
+        "input_mapping": {
+          "cache_key": { "type": "expression", "value": "intake.material_hash" },
+          "cache_type": { "type": "literal", "value": "deep_processing" },
+          "output_path": { "type": "expression", "value": "run_deep.output_path" },
+          "subject_id": { "type": "expression", "value": "intake.subject_id" },
+          "topic_id": { "type": "expression", "value": "intake.topic_id" }
+        }
+      }
+    },
+    { "id": "end", "type": "END", "label": "Done" }
+  ],
+  "edges": [
+    { "id": "e1", "source": "intake", "target": "cache_check" },
+    { "id": "e2", "source": "cache_check", "target": "cache_decision" },
+    { "id": "e3", "source": "cache_decision", "target": "run_deep", "label": "miss" },
+    { "id": "e4", "source": "cache_decision", "target": "end", "label": "hit" },
+    { "id": "e5", "source": "run_deep", "target": "write_cache" },
+    { "id": "e6", "source": "write_cache", "target": "end" }
+  ]
+}

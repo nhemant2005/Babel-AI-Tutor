@@ -1,0 +1,14 @@
+﻿{
+  "name": "content_cache",
+  "primary_key_column": "id",
+  "enable_rls": false,
+  "visibility": "POD",
+  "columns": [
+    { "name": "cache_key", "type": "TEXT", "required": true },
+    { "name": "cache_type", "type": "ENUM", "required": true, "options": ["structural", "deep_processing"] },
+    { "name": "subject_id", "type": "UUID", "required": true, "foreign_key": { "references": "subjects.id" } },
+    { "name": "topic_id", "type": "UUID", "required": false },
+    { "name": "output_path", "type": "TEXT", "required": true }
+  ],
+  "config": {}
+}

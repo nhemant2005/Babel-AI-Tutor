@@ -1,0 +1,21 @@
+{
+  "name": "build-session-context",
+  "description": "Assemble the context brief injected into the Tutor Agent at session start: soul.md + profile.md + learner model row + topic deep processing path.",
+  "type": "API",
+  "visibility": "POD",
+  "code": { "$file": "code.py" },
+  "permissions": { "grants": [
+    { "resource_type": "datastore_table", "resource_name": "learner_model",
+      "permission_ids": ["datastore.table.read", "datastore.record.read"] },
+    { "resource_type": "datastore_table", "resource_name": "topics",
+      "permission_ids": ["datastore.table.read", "datastore.record.read"] },
+    { "resource_type": "datastore_table", "resource_name": "subjects",
+      "permission_ids": ["datastore.table.read", "datastore.record.read"] },
+    { "resource_type": "file_path", "resource_name": "/tutor/",
+      "permission_ids": ["file.read"] },
+    { "resource_type": "file_path", "resource_name": "/student/",
+      "permission_ids": ["file.read"] },
+    { "resource_type": "file_path", "resource_name": "/subjects/",
+      "permission_ids": ["file.read"] }
+  ] }
+}

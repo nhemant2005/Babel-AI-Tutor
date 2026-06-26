@@ -1,0 +1,12 @@
+﻿{
+  "name": "notifications",
+  "primary_key_column": "id",
+  "enable_rls": false,
+  "visibility": "POD",
+  "columns": [
+    { "name": "type", "type": "ENUM", "required": true, "options": ["session_notes_ready", "return_nudge", "plan_updated", "upcoming_session", "schedule_conflict"] },
+    { "name": "message", "type": "TEXT", "required": true },
+    { "name": "read", "type": "BOOLEAN", "required": true, "default": false }
+  ],
+  "config": {}
+}

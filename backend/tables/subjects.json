@@ -1,0 +1,18 @@
+﻿{
+  "name": "subjects",
+  "primary_key_column": "id",
+  "enable_rls": false,
+  "visibility": "POD",
+  "columns": [
+    { "name": "name", "type": "TEXT", "required": true, "max_length": 240 },
+    { "name": "deadline", "type": "DATE", "required": false },
+    { "name": "color", "type": "TEXT", "required": false, "max_length": 16 },
+    { "name": "material_hash", "type": "TEXT", "required": false },
+    { "name": "status", "type": "ENUM", "required": true, "default": "pending", "options": ["pending", "processing", "active"] },
+    { "name": "duration_per_day_mins", "type": "INTEGER", "required": false },
+    { "name": "available_days", "type": "JSON", "required": false },
+    { "name": "prior_experience", "type": "TEXT", "required": false },
+    { "name": "intake_context", "type": "TEXT", "required": false }
+  ],
+  "config": {}
+}
