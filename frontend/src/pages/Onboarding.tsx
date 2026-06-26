@@ -4,7 +4,13 @@ import { useSubject } from "../hooks/useSubject";
 import { client } from "../lib/client";
 import ChatWindow from "../components/ChatWindow";
 import LandscapeGraph from "../components/LandscapeGraph";
+import DragDropZone, { FileList } from "../components/DragDropZone";
 
+interface FileItem {
+  name: string;
+  size: number;
+  file: File;
+}
 
 export default function Onboarding() {
   const { step = "upload" } = useParams<{ step?: string }>();
@@ -28,7 +34,7 @@ export default function Onboarding() {
   if (step === "upload") return (
     <UploadStep
       processing={subject?.status === "processing"}
-      onSubmit={async ({ name, deadline, text, availableDays, durationMins, priorExp }) => {
+      onSubmit={async ({ name, deadline, text, files, availableDays, durationMins, priorExp }) => {
         const s = await createRecord({
           name, deadline: deadline || undefined, status: "processing",
           available_days: availableDays,
@@ -36,9 +42,22 @@ export default function Onboarding() {
           prior_experience: priorExp,
         });
         setSubjectId(s.id);
+
+        // Upload files to Lemma storage
+        const rawFolder = `/subjects/${s.id}/raw`;
+        if (files.length > 0) {
+          for (const f of files) {
+            await (client as any).files.upload(f.file, {
+              name: f.name,
+              directoryPath: rawFolder,
+            });
+          }
+        }
+
         await (client as any).workflows.run("onboarding", {
           subject_id: s.id,
           material_content: text,
+          raw_folder: files.length > 0 ? rawFolder : undefined,
           material_hash: await hashText(text),
         });
         navigate("/onboarding/persona");
@@ -79,14 +98,27 @@ async function hashText(text: string): Promise<string> {
 }
 
 function UploadStep({ onSubmit, processing }: {
-  onSubmit: (d: { name: string; deadline: string; text: string; availableDays: string[]; durationMins: number; priorExp: string }) => Promise<void>;
+  onSubmit: (d: { name: string; deadline: string; text: string; files: FileItem[]; availableDays: string[]; durationMins: number; priorExp: string }) => Promise<void>;
   processing: boolean;
 }) {
   const [name, setName] = useState("");
   const [deadline, setDeadline] = useState("");
   const [text, setText] = useState("");
   const [priorExp, setPriorExp] = useState("");
+  const [files, setFiles] = useState<FileItem[]>([]);
   const [submitting, setSubmitting] = useState(false);
+
+  const canSubmit = name && (text.length > 0 || files.length > 0);
+
+  // Read text-based files into the text content
+  async function readFileText(f: FileItem): Promise<string> {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = () => resolve("");
+      reader.readAsText(f.file);
+    });
+  }
 
   if (processing) return (
     <div style={centerScreen}>
@@ -123,16 +155,28 @@ function UploadStep({ onSubmit, processing }: {
         <input value={priorExp} onChange={e => setPriorExp(e.target.value)} placeholder="e.g. I've done high school chemistry" style={inputStyle} />
       </label>
 
+      <DragDropZone onFilesChange={setFiles} />
+      <FileList files={files} onRemove={(i) => setFiles(prev => prev.filter((_, idx) => idx !== i))} />
+
       <label style={{ display: "block", marginBottom: "var(--space-6)" }}>
-        <span style={labelTextStyle}>Paste your material</span>
-        <textarea value={text} onChange={e => setText(e.target.value)} rows={10} placeholder="Paste notes, textbook excerpts, or paste text from a PDF..." style={{ ...inputStyle, resize: "vertical", fontFamily: "inherit" }} />
+        <span style={labelTextStyle}>Or paste text (optional)</span>
+        <textarea value={text} onChange={e => setText(e.target.value)} rows={6} placeholder="Paste notes, textbook excerpts, or paste text from a PDF..." style={{ ...inputStyle, resize: "vertical", fontFamily: "inherit" }} />
       </label>
 
       <button
-        disabled={!name || !text || submitting}
-        onClick={async () => { setSubmitting(true); await onSubmit({ name, deadline, text, availableDays: ["monday", "tuesday", "wednesday", "thursday", "friday"], durationMins: 60, priorExp }); }}
+        disabled={!canSubmit || submitting}
+        onClick={async () => {
+          setSubmitting(true);
+          // Read text-based file contents and merge with textarea
+          let mergedText = text;
+          for (const f of files) {
+            const content = await readFileText(f);
+            if (content.trim()) mergedText += `\n\n--- ${f.name} ---\n\n${content}`;
+          }
+          await onSubmit({ name, deadline, text: mergedText, files, availableDays: ["monday", "tuesday", "wednesday", "thursday", "friday"], durationMins: 60, priorExp });
+        }}
         className="btn-primary"
-        style={{ width: "100%", opacity: (!name || !text) ? 0.4 : 1 }}
+        style={{ width: "100%", opacity: canSubmit ? 1 : 0.4 }}
       >
         {submitting ? "Uploading..." : "Build my landscape"}
       </button>
