@@ -23,15 +23,15 @@ export default function StudySession() {
       const sid = await startSession(topicId, subjectId!);
       setSessionId(sid);
 
-      const ctx = await (client as any).functions.run("build-session-context", {
+      const ctx = await client.functions.run("build-session-context", { input: {
         topic_id: topicId,
         subject_id: subjectId,
         session_type: "return",
-      });
+      }});
 
-      const conv = await (client as any).conversations.create({
+      const conv = await client.conversations.create({
         agent_name: "tutor-agent",
-        initial_message: ctx.context,
+        instructions: (ctx as any).context,
       });
       setConversationId(conv.id);
     }
@@ -41,14 +41,12 @@ export default function StudySession() {
   async function handleExit(exitType: "natural" | "abandoned") {
     if (!sessionId || !conversationId) return;
     try {
-      const messages = await (client as any).conversations.listMessages(conversationId);
-      const summary = messages.map((m: any) => `${m.role}: ${m.content}`).join("\n");
-      await (client as any).workflows.run("session-end", {
-        session_id: sessionId,
-        topic_id: topicId,
-        subject_id: subjectId,
-        exit_type: exitType,
-        conversation_summary: summary,
+      const result = await client.conversations.messages.list(conversationId);
+      const summary = (result.items ?? []).map((m: any) => `${m.role}: ${m.text}`).join("\n");
+      const run = await client.workflows.runs.create("session-end");
+      await client.workflows.runs.submitForm(run.id, {
+        inputs: { session_id: sessionId, topic_id: topicId, subject_id: subjectId, exit_type: exitType, conversation_summary: summary },
+        node_id: run.active_wait!.node_id,
       });
     } catch {
       // Don't block navigation on banking failure

@@ -15,7 +15,7 @@ export default function PomodoroTimer({ sessionId }: { sessionId: string }) {
       setSecondsLeft(s => {
         if (s > 1) return s - 1;
         if (phase === "work") {
-          (client as any).functions.run("update-pomodoro", { action: "complete_cycle", session_id: sessionId }).catch(() => {});
+          client.functions.run("update-pomodoro", { input: { action: "complete_cycle", session_id: sessionId } }).catch(() => {});
           setPhase("break");
           return BREAK_MINS * 60;
         } else {

@@ -61,9 +61,9 @@ export default function Onboarding() {
           const rawFolder = `/subjects/${s.id}/raw`;
           if (files.length > 0) {
             setStage("uploading");
-            try { await (client as any).files.folder.create("raw", { directoryPath: `/subjects/${s.id}/` }); } catch { /* may already exist */ }
+            try { await client.files.folder.create("raw", { directoryPath: `/subjects/${s.id}/` }); } catch { /* may already exist */ }
             for (const f of files) {
-              await (client as any).files.upload(f.file, {
+              await client.files.upload(f.file, {
                 name: f.name,
                 directoryPath: rawFolder,
               });
@@ -71,11 +71,10 @@ export default function Onboarding() {
           }
 
           setStage("processing");
-          await (client as any).workflows.run("onboarding", {
-            subject_id: s.id,
-            material_content: text,
-            raw_folder: files.length > 0 ? rawFolder : undefined,
-            material_hash: await hashText(text),
+          const run = await client.workflows.runs.create("onboarding");
+          await client.workflows.runs.submitForm(run.id, {
+            inputs: { subject_id: s.id, material_content: text, material_hash: await hashText(text) },
+            node_id: run.active_wait!.node_id,
           });
           navigate("/onboarding/persona");
         } catch (err) {
@@ -321,15 +320,15 @@ function TrialSessionStep({ subjectId, persona, onComplete }: { subjectId: strin
 
   useEffect(() => {
     async function init() {
-      const ctx = await (client as any).functions.run("build-session-context", {
+      const ctx = await client.functions.run("build-session-context", { input: {
         topic_id: "trial",
         subject_id: subjectId,
         session_type: "trial",
         persona,
-      });
-      const conv = await (client as any).conversations.create({
+      }});
+      const conv = await client.conversations.create({
         agent_name: "tutor-agent",
-        initial_message: ctx.context,
+        instructions: (ctx as any).context,
       });
       setConversationId(conv.id);
     }

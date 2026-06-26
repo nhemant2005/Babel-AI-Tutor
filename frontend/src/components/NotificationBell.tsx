@@ -9,8 +9,8 @@ export default function NotificationBell() {
   useEffect(() => {
     async function fetch() {
       try {
-        const res = await (client as any).records.list("notifications", {
-          filter: [{ field: "read", op: "eq", value: false }],
+        const res = await client.records.list("notifications", {
+          filters: [{ field: "read", op: "eq", value: false }],
           limit: 50,
         });
         setUnread(res?.items?.length ?? 0);

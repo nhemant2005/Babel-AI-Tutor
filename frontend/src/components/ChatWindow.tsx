@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { client } from "../lib/client";
 
-interface Message { id: string; role: "user" | "assistant"; content: string; }
+interface Message { id: string; role: string; text: string; }
 
 interface Props {
   conversationId: string;
@@ -16,8 +16,8 @@ export default function ChatWindow({ conversationId, mode }: Props) {
 
   useEffect(() => {
     async function load() {
-      const msgs = await (client as any).conversations.listMessages(conversationId);
-      setMessages(msgs ?? []);
+      const result = await client.conversations.messages.list(conversationId);
+      setMessages((result.items ?? []) as unknown as Message[]);
     }
     if (conversationId) load();
   }, [conversationId]);
@@ -31,10 +31,11 @@ export default function ChatWindow({ conversationId, mode }: Props) {
     const text = input.trim();
     setInput("");
     setIsLoading(true);
-    setMessages(prev => [...prev, { id: Date.now().toString(), role: "user", content: text }]);
+    setMessages(prev => [...prev, { id: Date.now().toString(), role: "user", text }]);
     try {
-      const reply = await (client as any).conversations.send(conversationId, text);
-      setMessages(prev => [...prev, { id: (Date.now() + 1).toString(), role: "assistant", content: reply.content ?? reply }]);
+      await client.conversations.messages.send(conversationId, { content: text });
+      const result = await client.conversations.messages.list(conversationId);
+      setMessages((result.items ?? []) as unknown as Message[]);
     } finally {
       setIsLoading(false);
     }
@@ -75,7 +76,7 @@ export default function ChatWindow({ conversationId, mode }: Props) {
             fontFamily: "var(--font-body)",
             lineHeight: 1.6,
           }}>
-            {m.content}
+            {m.text}
           </div>
         ))}
         {isLoading && (

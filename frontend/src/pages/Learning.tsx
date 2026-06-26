@@ -6,8 +6,8 @@ export default function Learning() {
   const [subjects, setSubjects] = useState<any[]>([]);
 
   useEffect(() => {
-    (client as any).records.list("subjects", {
-      filter: [{ field: "status", op: "eq", value: "active" }],
+    client.records.list("subjects", {
+      filters: [{ field: "status", op: "eq", value: "active" }],
       limit: 20,
     }).then((r: any) => setSubjects(r?.items ?? [])).catch(() => {});
   }, []);

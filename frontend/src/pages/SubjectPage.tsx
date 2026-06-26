@@ -18,11 +18,12 @@ export default function SubjectPage() {
       return;
     }
     try {
-      const result = await (client as any).functions.run("check-prerequisites", { topic_id: topicId });
-      if (!result.all_met) {
+      const result = await client.functions.run("check-prerequisites", { input: { topic_id: topicId } });
+      const data = (result as any).output_data ?? result;
+      if (!data.all_met) {
         setPendingTopicId(topicId);
         setPendingTopicName(topicName);
-        setUnmetPrereqs(result.unmet);
+        setUnmetPrereqs(data.unmet);
         setPrereqShown(true);
       } else {
         navigate(`/subjects/${id}/session?topic=${topicId}`);

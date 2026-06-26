@@ -18,12 +18,12 @@ export default function LandscapeGraph({ subjectId, onTopicClick }: LandscapeGra
   useEffect(() => {
     async function load() {
       const [t, lm] = await Promise.all([
-        (client as any).records.list("topics", {
-          filter: [{ field: "subject_id", op: "eq", value: subjectId }],
+        client.records.list("topics", {
+          filters: [{ field: "subject_id", op: "eq", value: subjectId }],
           limit: 100,
         }),
-        (client as any).records.list("learner_model", {
-          filter: [{ field: "subject_id", op: "eq", value: subjectId }],
+        client.records.list("learner_model", {
+          filters: [{ field: "subject_id", op: "eq", value: subjectId }],
           limit: 100,
         }),
       ]);

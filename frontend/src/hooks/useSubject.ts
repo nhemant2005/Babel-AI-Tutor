@@ -6,18 +6,18 @@ export function useSubject(subjectId: string | null) {
 
   const refresh = useCallback(async () => {
     if (!subjectId) return;
-    const rec = await (client as any).records.get("subjects", subjectId);
+    const rec = await client.records.get("subjects", subjectId);
     setSubject(rec);
   }, [subjectId]);
 
   const createRecord = useCallback(async (data: Record<string, unknown>) => {
-    const rec = await (client as any).records.create("subjects", data);
+    const rec = await client.records.create("subjects", data);
     setSubject(rec);
     return rec;
   }, []);
 
   const updateRecord = useCallback(async (id: string, data: Record<string, unknown>) => {
-    const rec = await (client as any).records.update("subjects", id, data);
+    const rec = await client.records.update("subjects", id, data);
     setSubject(rec);
     return rec;
   }, []);

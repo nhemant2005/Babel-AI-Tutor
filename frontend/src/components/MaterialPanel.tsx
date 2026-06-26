@@ -8,7 +8,8 @@ export default function MaterialPanel({ subjectId, topicId }: Props) {
 
   useEffect(() => {
     const path = `/subjects/${subjectId}/deep-processing/${topicId}.md`;
-    (client as any).files.read(path)
+    client.files.download(path)
+      .then(blob => blob.text())
       .then(setContent)
       .catch(() => setContent("Material not yet processed. It will be ready after your first session on this topic."));
   }, [subjectId, topicId]);

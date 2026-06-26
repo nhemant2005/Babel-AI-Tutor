@@ -9,8 +9,8 @@ export default function Home() {
 
   useEffect(() => {
     async function load() {
-      const plan = await (client as any).records.list("plan", {
-        filter: [
+      const plan = await client.records.list("plan", {
+        filters: [
           { field: "scheduled_date", op: "eq", value: today },
           { field: "status", op: "eq", value: "scheduled" },
         ],
@@ -22,7 +22,7 @@ export default function Home() {
       if (items.length) {
         const topicMap: Record<string, any> = {};
         await Promise.all(items.map(async (item: any) => {
-          topicMap[item.topic_id] = await (client as any).records.get("topics", item.topic_id);
+          topicMap[item.topic_id] = await client.records.get("topics", item.topic_id);
         }));
         setTopics(topicMap);
       }
