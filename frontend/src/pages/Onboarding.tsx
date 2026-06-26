@@ -19,6 +19,7 @@ export default function Onboarding() {
     () => sessionStorage.getItem("onboarding_subject_id")
   );
   const [persona, setPersona] = useState<"socratic" | "example_first">("socratic");
+  const [error, setError] = useState<string | null>(null);
   const { subject, createRecord, refresh } = useSubject(subjectId);
 
   useEffect(() => {
@@ -34,33 +35,48 @@ export default function Onboarding() {
   if (step === "upload") return (
     <UploadStep
       processing={subject?.status === "processing"}
+      error={error}
+      onReset={() => { setSubjectId(null); setError(null); sessionStorage.removeItem("onboarding_subject_id"); }}
       onSubmit={async ({ name, deadline, text, files, availableDays, durationMins, priorExp }) => {
-        const s = await createRecord({
-          name, deadline: deadline || undefined, status: "processing",
-          available_days: availableDays,
-          duration_per_day_mins: durationMins,
-          prior_experience: priorExp,
-        });
+        setError(null);
+        let s: any;
+        try {
+          s = await createRecord({
+            name, deadline: deadline || undefined, status: "processing",
+            available_days: availableDays,
+            duration_per_day_mins: durationMins,
+            prior_experience: priorExp,
+          });
+        } catch (err) {
+          console.error("Failed to create subject:", err);
+          setError("Could not create subject. Check your connection and try again.");
+          return;
+        }
         setSubjectId(s.id);
 
-        // Upload files to Lemma storage
-        const rawFolder = `/subjects/${s.id}/raw`;
-        if (files.length > 0) {
-          for (const f of files) {
-            await (client as any).files.upload(f.file, {
-              name: f.name,
-              directoryPath: rawFolder,
-            });
+        try {
+          const rawFolder = `/subjects/${s.id}/raw`;
+          if (files.length > 0) {
+            try { await (client as any).files.folder.create("raw", { directoryPath: `/subjects/${s.id}/` }); } catch { /* may already exist */ }
+            for (const f of files) {
+              await (client as any).files.upload(f.file, {
+                name: f.name,
+                directoryPath: rawFolder,
+              });
+            }
           }
-        }
 
-        await (client as any).workflows.run("onboarding", {
-          subject_id: s.id,
-          material_content: text,
-          raw_folder: files.length > 0 ? rawFolder : undefined,
-          material_hash: await hashText(text),
-        });
-        navigate("/onboarding/persona");
+          await (client as any).workflows.run("onboarding", {
+            subject_id: s.id,
+            material_content: text,
+            raw_folder: files.length > 0 ? rawFolder : undefined,
+            material_hash: await hashText(text),
+          });
+          navigate("/onboarding/persona");
+        } catch (err) {
+          console.error("Onboarding failed:", err);
+          setError("Upload or processing failed. Check the browser console for details.");
+        }
       }}
     />
   );
@@ -97,9 +113,11 @@ async function hashText(text: string): Promise<string> {
   return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, "0")).join("");
 }
 
-function UploadStep({ onSubmit, processing }: {
+function UploadStep({ onSubmit, processing, error, onReset }: {
   onSubmit: (d: { name: string; deadline: string; text: string; files: FileItem[]; availableDays: string[]; durationMins: number; priorExp: string }) => Promise<void>;
   processing: boolean;
+  error: string | null;
+  onReset: () => void;
 }) {
   const [name, setName] = useState("");
   const [deadline, setDeadline] = useState("");
@@ -122,12 +140,28 @@ function UploadStep({ onSubmit, processing }: {
 
   if (processing) return (
     <div style={centerScreen}>
-      <p style={{ fontFamily: "var(--font-display)", fontSize: "var(--text-24)", fontWeight: "var(--weight-display-bold)", color: "var(--color-text-primary)", marginBottom: "var(--space-3)" }}>
-        Processing your material...
-      </p>
-      <p style={{ color: "var(--color-text-secondary)", fontSize: "var(--text-15)" }}>
-        Identifying topics and building your landscape
-      </p>
+      {error ? (
+        <>
+          <p style={{ fontFamily: "var(--font-display)", fontSize: "var(--text-20)", fontWeight: "var(--weight-display-bold)", color: "var(--color-destructive)", marginBottom: "var(--space-3)" }}>
+            Something went wrong
+          </p>
+          <p style={{ color: "var(--color-text-secondary)", fontSize: "var(--text-14)", marginBottom: "var(--space-6)", maxWidth: 400, textAlign: "center" }}>
+            {error}
+          </p>
+          <button onClick={onReset} className="btn-secondary">
+            Try again
+          </button>
+        </>
+      ) : (
+        <>
+          <p style={{ fontFamily: "var(--font-display)", fontSize: "var(--text-24)", fontWeight: "var(--weight-display-bold)", color: "var(--color-text-primary)", marginBottom: "var(--space-3)" }}>
+            Processing your material...
+          </p>
+          <p style={{ color: "var(--color-text-secondary)", fontSize: "var(--text-15)" }}>
+            Identifying topics and building your landscape
+          </p>
+        </>
+      )}
     </div>
   );
 
