@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-**AI Study Tutor** — Gappy.AI National Hackathon (June 24–30, 2026). 2 developers, 6 days. Built native on Lemma SDK.
+**AI Study Tutor** — Gappy.AI National Hackathon. Built native on Lemma SDK.
 
 **Pitch:** *"A tutor that actually remembers you and shows you its thinking."*
 
@@ -131,19 +131,6 @@ Post-exam analysis · cross-course synthesis · voice · gamification/streaks ·
 - **Kenny** — slow, panics, won't admit confusion. Served by: adaptive pacing, prerequisites never silently skipped, stuck-detection, active recall surfacing confusion *for* him.
 - **Niko** — overconfident, will bluff. Served by: active recall killing the bluff, informed-consequence check on skipping prereqs.
 - **Chunkz** — capable, overwhelmed by planning. Served by: system doing the organising. **Must-tier features must serve Kenny or Niko — Chunkz-only justifications are at most Should/Could.**
-
----
-
-## 6-Day Build Order
-
-| Day | Focus |
-|-----|-------|
-| Day 1 (Jun 24) | Lemma spike: map loop onto primitives, lock framework. Agent loop + learner model Table + ingest→markdown |
-| Day 2 (Jun 25) | Structural pass + landscape + dependency ranking + plan generation. Content-hash caching |
-| **Day 3 (Jun 26)** | **← TODAY** Tutor teaching loop (continuous context, RAG) + trial session + active recall → learner model writes |
-| Day 4 (Jun 27) | Navigation + informed-consequence check + two entry modes + auto-banked notes + session-end summary |
-| Day 5 (Jun 28) | Polish MUST loop to demo quality; add top SHOULDs that survived. Cut ruthlessly |
-| Day 6 (Jun 29–30) | Lock + record demo core loop; write-up + screen recording |
 
 ---
 

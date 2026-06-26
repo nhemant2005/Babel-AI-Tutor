@@ -1,81 +1,107 @@
 """
 One-time setup: creates all Lemma tables, deploys functions/agents/workflows,
-uploads persona files. Run from D:\Gappy_Ai after `lemma auth login` and
-setting LEMMA_POD env var.
+uploads persona files. Run from the repo root after: lemma auth login
 
 Usage:
-  cd D:\Gappy_Ai
-  $env:LEMMA_POD = "your-pod-slug"
   python backend/setup.py
 """
 
+import json
 import subprocess
 import sys
-import json
 from pathlib import Path
 
 BASE = Path(__file__).parent
-ROOT = BASE.parent
+POD = "019f0438-7cc1-73e4-839a-d178cab4d79a"
+
+
+def read(path: Path) -> str:
+    # utf-8-sig strips BOM if present
+    return path.read_text(encoding="utf-8-sig")
+
+
+SKIP_ERRORS = ("already exists", "CONFLICT", "DUPLICATE")
+
+def fix_file_grants(payload: dict) -> None:
+    grants = payload.get("permissions", {}).get("grants", [])
+    # Folder grants are not supported via the permissions API — strip them.
+    # (Set file access manually in the Lemma web UI if needed.)
+    payload.get("permissions", {})["grants"] = [
+        g for g in grants if g.get("resource_type") not in ("file_path", "folder")
+    ]
 
 def run(cmd: list[str], check: bool = True) -> subprocess.CompletedProcess:
-    print(f"  > {' '.join(cmd)}")
+    print(f"  > {' '.join(str(c) for c in cmd)}")
     result = subprocess.run(cmd, capture_output=True, text=True)
-    if result.stdout:
-        print(f"    {result.stdout.strip()}")
+    combined = result.stdout + result.stderr
     if result.returncode != 0:
-        print(f"    ERROR: {result.stderr.strip()}")
-        if check:
-            sys.exit(1)
+        if any(s in combined for s in SKIP_ERRORS):
+            print(f"    skipped (already exists)")
+        else:
+            print(f"    ERROR: {combined.strip()}")
+            if check:
+                sys.exit(1)
+    else:
+        if result.stdout:
+            print(f"    {result.stdout.strip()}")
     return result
+
 
 def main():
     print("\n=== Gappy.AI Pod Setup ===\n")
 
-    # Tables (order matters: subjects first due to FKs)
+    # Tables — positional arg is the name; payload is the schema only
     print("1. Creating tables...")
     for table in ["subjects", "topics", "learner_model", "sessions",
                   "plan", "content_cache", "notifications"]:
         path = BASE / "tables" / f"{table}.json"
-        run(["lemma", "table", "create", "--json", path.read_text()])
+        payload = json.loads(read(path))
+        payload.pop("name", None)  # name goes as positional arg
+        run(["lemma", "table", "create", table,
+             "--data", json.dumps(payload), "--pod", POD])
 
     print("\n2. Deploying functions...")
     for fn_dir in sorted((BASE / "functions").iterdir()):
         fn_json = fn_dir / "function.json"
         fn_code = fn_dir / "code.py"
         if fn_json.exists() and fn_code.exists():
+            payload = json.loads(read(fn_json))
+            payload["code"] = read(fn_code)
+            fix_file_grants(payload)
             run(["lemma", "function", "create",
-                 "--json", fn_json.read_text(),
-                 "--code", str(fn_code)])
+                 "--data", json.dumps(payload), "--pod", POD])
 
-    print("\n3. Deploying agents...")
+    print("\n3. Creating file folders...")
+    for folder in ["tutor", "subjects", "student"]:
+        run(["lemma", "file", "mkdir", f"/{folder}/", "--pod", POD])
+
+    print("\n4. Deploying agents...")
     for agent_dir in sorted((BASE / "agents").iterdir()):
         a_json = agent_dir / "agent.json"
-        a_inst = agent_dir / "instruction.md"
-        if a_json.exists() and a_inst.exists():
+        a_instruction = agent_dir / "instruction.md"
+        if a_json.exists():
+            payload = json.loads(read(a_json))
+            if a_instruction.exists():
+                payload["instruction"] = read(a_instruction)
+            fix_file_grants(payload)
             run(["lemma", "agent", "create",
-                 "--json", a_json.read_text(),
-                 "--instruction", str(a_inst)])
+                 "--data", json.dumps(payload), "--pod", POD])
 
-    print("\n4. Deploying workflows...")
+    print("\n5. Deploying workflows...")
     for wf in sorted((BASE / "workflows").glob("*.json")):
-        run(["lemma", "workflow", "validate", "--json", wf.read_text()], check=False)
-        run(["lemma", "workflow", "create", "--json", wf.read_text()])
+        run(["lemma", "workflow", "validate",
+             "--data", read(wf), "--pod", POD], check=False)
+        run(["lemma", "workflow", "create",
+             "--data", read(wf), "--pod", POD])
 
-    print("\n5. Uploading persona files...")
-    run(["lemma", "files", "mkdir", "/tutor"])
+    print("\n6. Uploading persona files...")
     for persona in (BASE / "personas").glob("*.md"):
-        run(["lemma", "files", "write", f"/tutor/{persona.name}",
-             "--input", str(persona)])
-
-    print("\n6. Uploading persona files as soul.md aliases...")
-    # Default soul.md = socratic (user can change via persona selection)
-    run(["lemma", "files", "write", "/tutor/soul_socratic.md",
-         "--input", str(BASE / "personas" / "soul_socratic.md")])
-    run(["lemma", "files", "write", "/tutor/soul_example_first.md",
-         "--input", str(BASE / "personas" / "soul_example_first.md")])
+        run(["lemma", "file", "write", f"/tutor/{persona.name}",
+             "--from", str(persona), "--pod", POD])
 
     print("\n=== Setup complete! ===")
-    print("Next: verify with `lemma tables list` and `lemma agents list`")
+    print(f"Verify: lemma table list --pod {POD}")
+
 
 if __name__ == "__main__":
     main()

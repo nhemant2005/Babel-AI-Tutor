@@ -1,9 +1,20 @@
+#input_type_name: NudgeInput
+#output_type_name: NudgeOutput
+#function_name: check_return_nudge
+
 from datetime import datetime, timezone, timedelta
-from lemma_sdk import Pod
+from pydantic import BaseModel
+from lemma_sdk import FunctionContext, Pod
 
 NUDGE_THRESHOLD_DAYS = 2
 
-def run() -> dict:
+class NudgeInput(BaseModel):
+    pass
+
+class NudgeOutput(BaseModel):
+    nudges_sent: int
+
+async def check_return_nudge(ctx: FunctionContext, data: NudgeInput) -> NudgeOutput:
     pod = Pod.from_env()
     subjects = pod.records.list("subjects",
         filter=[{"field": "status", "op": "eq", "value": "active"}],
@@ -20,20 +31,16 @@ def run() -> dict:
             sort=[{"field": "ended_at", "order": "desc"}],
             limit=1,
         ).to_dict().get("items", [])
-
         if not sessions:
             continue
-
         last_ended = datetime.fromisoformat(sessions[0]["ended_at"])
         gap = now - last_ended
-
         if gap > timedelta(days=NUDGE_THRESHOLD_DAYS):
-            days_ago = gap.days
             pod.records.create("notifications", {
                 "type": "return_nudge",
-                "message": f"You haven't studied {subject['name']} in {days_ago} days.",
+                "message": f"You haven't studied {subject['name']} in {gap.days} days.",
                 "read": False,
             })
             nudges_sent += 1
 
-    return {"nudges_sent": nudges_sent}
+    return NudgeOutput(nudges_sent=nudges_sent)
