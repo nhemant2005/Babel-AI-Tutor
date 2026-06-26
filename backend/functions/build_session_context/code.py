@@ -18,27 +18,37 @@ class SessionContextOutput(BaseModel):
 async def build_session_context(ctx: FunctionContext, data: SessionContextInput) -> SessionContextOutput:
     pod = Pod.from_env()
 
-    soul = pod.files.read(f"/tutor/soul_{data.persona}.md")
+    soul = pod.files.download(f"/tutor/soul_{data.persona}.md").decode("utf-8")
 
     try:
-        profile = pod.files.read("/student/profile.md")
+        profile = pod.files.download("/student/profile.md").decode("utf-8")
     except Exception:
         profile = "No profile yet — this is the student's first session."
 
-    topic = pod.records.get("topics", data.topic_id)
-    subject = pod.records.get("subjects", data.subject_id)
+    try:
+        topic = pod.records.get("topics", data.topic_id)
+    except Exception:
+        topic = {"name": "Trial Session", "structural_summary": "This is an introductory trial session to get to know the material."}
 
-    lm_results = pod.records.list(
-        "learner_model",
-        filter=[{"field": "topic_id", "op": "eq", "value": data.topic_id}],
-        limit=1,
-    )
-    lm_items = lm_results.to_dict().get("items", [])
-    lm = lm_items[0] if lm_items else {}
+    try:
+        subject = pod.records.get("subjects", data.subject_id)
+    except Exception:
+        subject = {"name": "Unknown Subject", "intake_context": ""}
+
+    try:
+        lm_results = pod.records.list(
+            "learner_model",
+            filters=[{"field": "topic_id", "op": "eq", "value": data.topic_id}],
+            limit=1,
+        )
+        lm_items = lm_results.items
+        lm = lm_items[0] if lm_items else {}
+    except Exception:
+        lm = {}
 
     deep_path = f"/subjects/{data.subject_id}/deep-processing/{data.topic_id}.md"
     try:
-        deep_content = pod.files.read(deep_path)
+        deep_content = pod.files.download(deep_path).decode("utf-8")
     except Exception:
         deep_content = topic.get("structural_summary", "")
 

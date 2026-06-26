@@ -27,18 +27,18 @@ async def generate_plan(ctx: FunctionContext, data: GeneratePlanInput) -> Genera
 
     topics_resp = pod.records.list(
         "topics",
-        filter=[{"field": "subject_id", "op": "eq", "value": data.subject_id}],
+        filters=[{"field": "subject_id", "op": "eq", "value": data.subject_id}],
         sort=[{"field": "depth_rank", "order": "asc"}],
         limit=100,
     )
-    topics = topics_resp.to_dict().get("items", [])
+    topics = topics_resp.items
 
     existing = pod.records.list(
         "plan",
-        filter=[{"field": "subject_id", "op": "eq", "value": data.subject_id}],
+        filters=[{"field": "subject_id", "op": "eq", "value": data.subject_id}],
         limit=200,
     )
-    for row in existing.to_dict().get("items", []):
+    for row in existing.items:
         pod.records.delete("plan", row["id"])
 
     today = date.today()
