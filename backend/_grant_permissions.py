@@ -10,11 +10,10 @@ LEMMA = r"C:\Users\nhema\.local\bin\lemma.exe"
 POD   = "019f0438-7cc1-73e4-839a-d178cab4d79a"
 BASE  = Path(r"D:\Gappy_Ai\backend")
 
-SKIP_TYPES = {"file_path", "folder"}  # still not supported via API
+SKIP_TYPES = {"file_path", "folder"}  # must be set via lemma.work UI
 
 def grant(resource_type: str, name: str, grants: list, cmd: list[str]):
     """grants is list of {resource_type, resource_name, permission_ids} dicts."""
-    # Filter to supported types only
     supported = [g for g in grants if g.get("resource_type") not in SKIP_TYPES]
     if not supported:
         print(f"  {name}: no supported grants to apply")

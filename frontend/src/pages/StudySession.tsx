@@ -43,10 +43,10 @@ export default function StudySession() {
     try {
       const result = await client.conversations.messages.list(conversationId);
       const summary = (result.items ?? []).map((m: any) => `${m.role}: ${m.text}`).join("\n");
-      const run = await client.workflows.runs.create("session-end");
-      await client.workflows.runs.submitForm(run.id, {
-        inputs: { session_id: sessionId, topic_id: topicId, subject_id: subjectId, exit_type: exitType, conversation_summary: summary },
-        node_id: run.active_wait!.node_id,
+      // Call note-banker agent directly — workflow submitForm returns 500 (no CORS on error)
+      const conv = await client.conversations.create({ agent_name: "note-banker-agent" });
+      await client.conversations.messages.send(conv.id, {
+        content: `session_id: ${sessionId}\ntopic_id: ${topicId}\nsubject_id: ${subjectId}\nexit_type: ${exitType}\n\nConversation summary:\n${summary}`,
       });
     } catch {
       // Don't block navigation on banking failure

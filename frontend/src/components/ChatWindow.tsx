@@ -34,8 +34,18 @@ export default function ChatWindow({ conversationId, mode }: Props) {
     setMessages(prev => [...prev, { id: Date.now().toString(), role: "user", text }]);
     try {
       await client.conversations.messages.send(conversationId, { content: text });
-      const result = await client.conversations.messages.list(conversationId);
-      setMessages((result.items ?? []) as unknown as Message[]);
+      // Poll until agent reply appears (agent responds async)
+      const before = messages.length + 1; // +1 for the user message we just added
+      for (let i = 0; i < 30; i++) {
+        await new Promise(r => setTimeout(r, 2000));
+        const result = await client.conversations.messages.list(conversationId);
+        const items = (result.items ?? []) as unknown as Message[];
+        if (items.length > before) {
+          setMessages(items);
+          break;
+        }
+        setMessages(items);
+      }
     } finally {
       setIsLoading(false);
     }
