@@ -71,11 +71,12 @@ export default function Onboarding() {
           }
 
           setStage("processing");
-          const run = await client.workflows.runs.create("onboarding");
-          await client.workflows.runs.submitForm(run.id, {
-            inputs: { subject_id: s.id, material_content: text, material_hash: await hashText(text) },
-            node_id: run.active_wait!.node_id,
+          // Fire ingest agent via conversation (bypasses workflow form-submit 500)
+          const conv = await client.conversations.create({
+            agent_name: "ingest-agent",
+            instructions: `Mode: structural\nSubject ID: ${s.id}\nMaterial content: ${text}\nFiles uploaded to: /subjects/${s.id}/raw/\n\nDo your structural pass now.`,
           });
+          await client.conversations.messages.send(conv.id, { content: `Process the material for subject ${s.id}. Identify topics, write source notes, and create rows in the topics table.` });
           navigate("/onboarding/persona");
         } catch (err) {
           console.error("Onboarding failed:", err);
@@ -112,10 +113,6 @@ export default function Onboarding() {
   return null;
 }
 
-async function hashText(text: string): Promise<string> {
-  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
-  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, "0")).join("");
-}
 
 function UploadStep({ onSubmit, processing, stage, error, onReset }: {
   onSubmit: (d: { name: string; deadline: string; text: string; files: FileItem[]; availableDays: string[]; durationMins: number; priorExp: string }) => Promise<void>;
