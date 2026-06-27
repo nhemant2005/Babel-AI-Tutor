@@ -36,12 +36,11 @@ async def build_session_context(ctx: FunctionContext, data: SessionContextInput)
         subject = {"name": "Unknown Subject", "intake_context": ""}
 
     try:
-        lm_results = pod.records.list(
+        lm_items = pod.records.list(
             "learner_model",
-            filters=[{"field": "topic_id", "op": "eq", "value": data.topic_id}],
+            filter=[{"field": "topic_id", "op": "eq", "value": data.topic_id}],
             limit=1,
-        )
-        lm_items = lm_results.items
+        ).to_dict()["items"]
         lm = lm_items[0] if lm_items else {}
     except Exception:
         lm = {}

@@ -6,14 +6,14 @@
   "visibility": "POD",
   "permissions": { "grants": [
     { "resource_type": "datastore_table", "resource_name": "topics",
-      "permission_ids": ["datastore.table.read", "datastore.record.write"] },
+      "permission_ids": ["datastore.table.read", "datastore.record.read", "datastore.record.write"] },
     { "resource_type": "datastore_table", "resource_name": "plan",
-      "permission_ids": ["datastore.table.read", "datastore.record.write"] },
+      "permission_ids": ["datastore.table.read", "datastore.record.read", "datastore.record.write"] },
     { "resource_type": "datastore_table", "resource_name": "learner_model",
-      "permission_ids": ["datastore.table.read", "datastore.record.write"] },
+      "permission_ids": ["datastore.table.read", "datastore.record.read", "datastore.record.write"] },
     { "resource_type": "datastore_table", "resource_name": "subjects",
-      "permission_ids": ["datastore.table.read", "datastore.record.write"] },
+      "permission_ids": ["datastore.table.read", "datastore.record.read", "datastore.record.write"] },
     { "resource_type": "datastore_table", "resource_name": "notifications",
-      "permission_ids": ["datastore.table.read", "datastore.record.write"] }
+      "permission_ids": ["datastore.table.read", "datastore.record.read", "datastore.record.write"] }
   ] }
 }

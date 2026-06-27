@@ -6,6 +6,6 @@
   "code": { "$file": "code.py" },
   "permissions": { "grants": [
     { "resource_type": "datastore_table", "resource_name": "sessions",
-      "permission_ids": ["datastore.table.read", "datastore.record.write"] }
+      "permission_ids": ["datastore.table.read", "datastore.record.read", "datastore.record.write"] }
   ] }
 }

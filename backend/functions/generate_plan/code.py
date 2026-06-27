@@ -25,20 +25,19 @@ async def generate_plan(ctx: FunctionContext, data: GeneratePlanInput) -> Genera
     duration = subject.get("duration_per_day_mins") or 60
     available_day_nums = {DAY_MAP[d.lower()] for d in available_days if d.lower() in DAY_MAP}
 
-    topics_resp = pod.records.list(
+    topics = pod.records.list(
         "topics",
-        filters=[{"field": "subject_id", "op": "eq", "value": data.subject_id}],
-        sort=[{"field": "depth_rank", "order": "asc"}],
+        filter=[{"field": "subject_id", "op": "eq", "value": data.subject_id}],
+        sort=[{"field": "depth_rank", "direction": "asc"}],
         limit=100,
-    )
-    topics = topics_resp.items
+    ).to_dict()["items"]
 
     existing = pod.records.list(
         "plan",
-        filters=[{"field": "subject_id", "op": "eq", "value": data.subject_id}],
+        filter=[{"field": "subject_id", "op": "eq", "value": data.subject_id}],
         limit=200,
-    )
-    for row in existing.items:
+    ).to_dict()["items"]
+    for row in existing:
         pod.records.delete("plan", row["id"])
 
     today = date.today()

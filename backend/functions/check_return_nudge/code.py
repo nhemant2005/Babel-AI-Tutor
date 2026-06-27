@@ -17,8 +17,8 @@ class NudgeOutput(BaseModel):
 async def check_return_nudge(ctx: FunctionContext, data: NudgeInput) -> NudgeOutput:
     pod = Pod.from_env()
     subjects = pod.records.list("subjects",
-        filters=[{"field": "status", "op": "eq", "value": "active"}],
-        limit=50).items
+        filter=[{"field": "status", "op": "eq", "value": "active"}],
+        limit=50).to_dict()["items"]
 
     nudges_sent = 0
     now = datetime.now(timezone.utc)
@@ -26,11 +26,11 @@ async def check_return_nudge(ctx: FunctionContext, data: NudgeInput) -> NudgeOut
     for subject in subjects:
         sessions = pod.records.list(
             "sessions",
-            filters=[{"field": "subject_id", "op": "eq", "value": subject["id"]},
+            filter=[{"field": "subject_id", "op": "eq", "value": subject["id"]},
                     {"field": "ended_at", "op": "ne", "value": None}],
-            sort=[{"field": "ended_at", "order": "desc"}],
+            sort=[{"field": "ended_at", "direction": "desc"}],
             limit=1,
-        ).items
+        ).to_dict()["items"]
         if not sessions:
             continue
         last_ended = datetime.fromisoformat(sessions[0]["ended_at"])

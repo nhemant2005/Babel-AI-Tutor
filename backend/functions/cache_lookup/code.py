@@ -16,13 +16,12 @@ class CacheLookupOutput(BaseModel):
 
 async def cache_lookup(ctx: FunctionContext, data: CacheLookupInput) -> CacheLookupOutput:
     pod = Pod.from_env()
-    results = pod.records.list(
+    items = pod.records.list(
         "content_cache",
-        filters=[{"field": "cache_key", "op": "eq", "value": data.cache_key},
+        filter=[{"field": "cache_key", "op": "eq", "value": data.cache_key},
                 {"field": "cache_type", "op": "eq", "value": data.cache_type}],
         limit=1,
-    )
-    items = results.items
+    ).to_dict()["items"]
     if items:
         return CacheLookupOutput(hit=True, output_path=items[0]["output_path"])
     return CacheLookupOutput(hit=False, output_path=None)

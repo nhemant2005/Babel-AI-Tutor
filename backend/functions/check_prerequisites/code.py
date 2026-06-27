@@ -22,13 +22,12 @@ async def check_prerequisites(ctx: FunctionContext, data: PrereqInput) -> Prereq
 
     unmet = []
     for dep_id in dep_ids:
-        lm_results = pod.records.list(
+        lm_items = pod.records.list(
             "learner_model",
-            filters=[{"field": "topic_id", "op": "eq", "value": dep_id}],
+            filter=[{"field": "topic_id", "op": "eq", "value": dep_id}],
             limit=1,
-        )
-        items = lm_results.items
-        if not items or not items[0].get("prerequisite_met"):
+        ).to_dict()["items"]
+        if not lm_items or not lm_items[0].get("prerequisite_met"):
             dep_topic = pod.records.get("topics", dep_id)
             unmet.append(dep_topic.get("name", dep_id))
 
