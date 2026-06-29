@@ -70,13 +70,11 @@ export default function Onboarding() {
           setStage("uploading");
           try { await client.files.folder.create("raw", { directoryPath: `/subjects/${s.id}/` }); } catch { /* may already exist */ }
 
-          // Upload binary files
-          for (const f of files) {
-            await client.files.upload(f.file, {
-              name: f.name,
-              directoryPath: rawFolder,
-            });
-          }
+          // Upload all files in parallel (#4 fix)
+          await Promise.all(files.map(f => client.files.upload(f.file, {
+            name: f.name,
+            directoryPath: rawFolder,
+          })));
 
           // If user pasted text with no file, save it as a plain text file
           if (text.trim() && files.length === 0) {
@@ -318,21 +316,21 @@ function TrialSessionStep({ subjectId, persona, onComplete }: { subjectId: strin
 
   useEffect(() => {
     async function init() {
-      const ctx = await client.functions.run("build-session-context", { input: {
-        topic_id: "trial",
-        subject_id: subjectId,
-        session_type: "trial",
-        persona,
-      }});
+      // Fetch context and create conversation in parallel (#1 fix)
+      const [ctx, conv] = await Promise.all([
+        client.functions.run("build-session-context", { input: {
+          topic_id: "trial",
+          subject_id: subjectId,
+          session_type: "trial",
+          persona,
+        }}).catch(() => ({ context: "" })),
+        client.conversations.create({ agent_name: "tutor-agent", instructions: "" }),
+      ]);
+      // Update instructions now that we have context — send as first message since create is already done
       const rawCtx: string = (ctx as any).context ?? "";
-      const instructions = rawCtx.length > 12000 ? rawCtx.slice(0, 12000) + "\n\n[context truncated]" : rawCtx;
-      const conv = await client.conversations.create({
-        agent_name: "tutor-agent",
-        instructions,
-      });
-      // Kick off the agent — trial sessions are tutor-initiated
+      const ctxTrunc = rawCtx.length > 12000 ? rawCtx.slice(0, 12000) + "\n\n[context truncated]" : rawCtx;
       await client.conversations.messages.send(conv.id, {
-        content: "__SYSTEM__: Begin the trial session now. Orient the student with the material, then engage them, then end with something that makes them want to learn more. You speak first.",
+        content: `__SYSTEM__: ${ctxTrunc}\n\nBegin the trial session now. Orient the student with the material, then engage them, then end with something that makes them want to learn more. You speak first.`,
       });
       setConversationId(conv.id);
     }

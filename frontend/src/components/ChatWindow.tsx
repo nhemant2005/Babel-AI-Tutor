@@ -8,61 +8,62 @@ interface Props {
   mode: "teaching" | "recall_check";
 }
 
+async function pollUntilNew(conversationId: string, knownCount: number, maxTries = 25): Promise<Message[]> {
+  // Check immediately first, then back off (#3 fix)
+  for (let i = 0; i < maxTries; i++) {
+    const result = await client.conversations.messages.list(conversationId);
+    const items = (result.items ?? []) as unknown as Message[];
+    if (items.length > knownCount) return items;
+    await new Promise(r => setTimeout(r, i === 0 ? 500 : 2000)); // fast first retry, then 2s
+  }
+  return [];
+}
+
 export default function ChatWindow({ conversationId, mode }: Props) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  const [isWaiting, setIsWaiting] = useState(false); // agent is thinking
   const bottomRef = useRef<HTMLDivElement>(null);
 
+  // On mount: wait for agent's first message (tutor-initiated sessions)
   useEffect(() => {
     if (!conversationId) return;
     let cancelled = false;
+    setIsWaiting(true);
 
-    async function load() {
-      // Poll until the agent sends its first message (handles tutor-initiated sessions)
-      for (let i = 0; i < 30; i++) {
-        const result = await client.conversations.messages.list(conversationId);
-        const items = (result.items ?? []) as unknown as Message[];
-        if (cancelled) return;
-        setMessages(items);
-        // Stop polling once we have an agent message
-        if (items.some(m => m.role !== "user")) break;
-        await new Promise(r => setTimeout(r, 2000));
-      }
-    }
+    (async () => {
+      const items = await pollUntilNew(conversationId, 0);
+      if (!cancelled) { setMessages(items); setIsWaiting(false); }
+    })().catch(() => setIsWaiting(false));
 
-    load().catch(console.error);
     return () => { cancelled = true; };
   }, [conversationId]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+  }, [messages, isWaiting]);
 
   async function handleSend() {
-    if (!input.trim() || isLoading) return;
+    if (!input.trim() || isWaiting) return;
     const text = input.trim();
     setInput("");
-    setIsLoading(true);
-    setMessages(prev => [...prev, { id: Date.now().toString(), role: "user", text }]);
+
+    // Optimistic: add user message immediately
+    const optimisticMsg: Message = { id: `opt-${Date.now()}`, role: "user", text };
+    setMessages(prev => [...prev, optimisticMsg]);
+    setIsWaiting(true);
+
     try {
       await client.conversations.messages.send(conversationId, { content: text });
-      // Poll until agent reply appears (agent responds async)
-      const before = messages.length + 1; // +1 for the user message we just added
-      for (let i = 0; i < 30; i++) {
-        await new Promise(r => setTimeout(r, 2000));
-        const result = await client.conversations.messages.list(conversationId);
-        const items = (result.items ?? []) as unknown as Message[];
-        if (items.length > before) {
-          setMessages(items);
-          break;
-        }
-        setMessages(items);
-      }
+      // knownCount = current messages + 1 for the one we just sent (#10 fix — use value, not stale closure)
+      const serverMessages = await pollUntilNew(conversationId, messages.length + 1);
+      if (serverMessages.length) setMessages(serverMessages);
     } finally {
-      setIsLoading(false);
+      setIsWaiting(false);
     }
   }
+
+  const visible = messages.filter(m => !m.text?.startsWith("__SYSTEM__:"));
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%", background: "var(--color-bg-base)" }}>
@@ -87,7 +88,7 @@ export default function ChatWindow({ conversationId, mode }: Props) {
         flexDirection: "column",
         gap: "var(--space-3)",
       }}>
-        {messages.filter(m => !m.text?.startsWith("__SYSTEM__:")).map(m => (
+        {visible.map(m => (
           <div key={m.id} style={{
             alignSelf: m.role === "user" ? "flex-end" : "flex-start",
             background: m.role === "user" ? "var(--color-accent)" : "var(--color-bg-elevated)",
@@ -102,16 +103,25 @@ export default function ChatWindow({ conversationId, mode }: Props) {
             {m.text}
           </div>
         ))}
-        {isLoading && (
+
+        {isWaiting && (
           <div style={{
             alignSelf: "flex-start",
             background: "var(--color-bg-elevated)",
             borderRadius: "var(--radius-md)",
             padding: "var(--space-2) var(--space-4)",
-            color: "var(--color-text-tertiary)",
-            fontSize: "var(--text-14)",
+            display: "flex",
+            gap: 4,
+            alignItems: "center",
           }}>
-            ...
+            {[0, 1, 2].map(i => (
+              <span key={i} style={{
+                width: 6, height: 6, borderRadius: "50%",
+                background: "var(--color-text-tertiary)",
+                display: "inline-block",
+                animation: `bounce 1.2s ease-in-out ${i * 0.2}s infinite`,
+              }} />
+            ))}
           </div>
         )}
         <div ref={bottomRef} />
@@ -127,7 +137,8 @@ export default function ChatWindow({ conversationId, mode }: Props) {
           value={input}
           onChange={e => setInput(e.target.value)}
           onKeyDown={e => e.key === "Enter" && !e.shiftKey && handleSend()}
-          placeholder="Type your answer..."
+          placeholder={isWaiting ? "Tutor is thinking…" : "Type your answer…"}
+          disabled={isWaiting}
           style={{
             flex: 1,
             padding: "var(--space-2) var(--space-3)",
@@ -138,9 +149,10 @@ export default function ChatWindow({ conversationId, mode }: Props) {
             background: "var(--color-bg-elevated)",
             outline: "none",
             fontFamily: "var(--font-body)",
+            opacity: isWaiting ? 0.5 : 1,
           }}
         />
-        <button onClick={handleSend} disabled={isLoading} className="btn-primary">
+        <button onClick={handleSend} disabled={isWaiting} className="btn-primary">
           Send
         </button>
       </div>

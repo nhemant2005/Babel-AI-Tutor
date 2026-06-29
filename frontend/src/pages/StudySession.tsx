@@ -20,26 +20,21 @@ export default function StudySession() {
 
   useEffect(() => {
     async function init() {
-      const sid = await startSession(topicId, subjectId!);
+      // Start session record, fetch context, and create conversation all in parallel (#1 fix)
+      const [sid, ctx, conv] = await Promise.all([
+        startSession(topicId, subjectId!),
+        client.functions.run("build-session-context", { input: {
+          topic_id: topicId,
+          subject_id: subjectId,
+          session_type: "return",
+        }}).catch(() => ({ context: "" })),
+        client.conversations.create({ agent_name: "tutor-agent", instructions: "" }),
+      ]);
       setSessionId(sid);
-
-      const ctx = await client.functions.run("build-session-context", { input: {
-        topic_id: topicId,
-        subject_id: subjectId,
-        session_type: "return",
-      }});
-
-      // Cap instructions to avoid exceeding Lemma's request body limit
       const rawCtx: string = (ctx as any).context ?? "";
-      const instructions = rawCtx.length > 12000 ? rawCtx.slice(0, 12000) + "\n\n[context truncated]" : rawCtx;
-
-      const conv = await client.conversations.create({
-        agent_name: "tutor-agent",
-        instructions,
-      });
-      // Tutor always speaks first
+      const ctxTrunc = rawCtx.length > 12000 ? rawCtx.slice(0, 12000) + "\n\n[context truncated]" : rawCtx;
       await client.conversations.messages.send(conv.id, {
-        content: "__SYSTEM__: Begin the session. Start with a brief recall check on prior sessions if any, then move into today's topic.",
+        content: `__SYSTEM__: ${ctxTrunc}\n\nBegin the session. Start with a brief recall check on prior sessions if any, then move into today's topic.`,
       });
       setConversationId(conv.id);
     }

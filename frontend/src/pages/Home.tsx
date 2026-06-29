@@ -5,26 +5,28 @@ import { client } from "../lib/client";
 export default function Home() {
   const today = new Date().toISOString().split("T")[0];
   const navigate = useNavigate();
-  const [todaysPlan, setTodaysPlan] = useState<any[]>([]);
+  const [todaysPlan, setTodaysPlan] = useState<any[] | null>(null); // null = loading
   const [topics, setTopics] = useState<Record<string, any>>({});
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function load() {
-      // Check if user has any subjects — if not, they're new, send to onboarding
-      const subjects = await client.records.list("subjects", { limit: 1 });
+      // Check subjects and fetch plan in parallel (#2 fix)
+      const [subjects, plan] = await Promise.all([
+        client.records.list("subjects", { limit: 1 }),
+        client.records.list("plan", {
+          filters: [
+            { field: "scheduled_date", op: "eq", value: today },
+            { field: "status", op: "eq", value: "scheduled" },
+          ],
+          limit: 10,
+        }),
+      ]);
+
       if (!(subjects?.items ?? []).length) {
         navigate("/onboarding/upload", { replace: true });
         return;
       }
 
-      const plan = await client.records.list("plan", {
-        filters: [
-          { field: "scheduled_date", op: "eq", value: today },
-          { field: "status", op: "eq", value: "scheduled" },
-        ],
-        limit: 10,
-      });
       const items = plan?.items ?? [];
       setTodaysPlan(items);
 
@@ -35,16 +37,9 @@ export default function Home() {
         }));
         setTopics(topicMap);
       }
-      setLoading(false);
     }
-    load().catch(() => setLoading(false));
+    load().catch(() => setTodaysPlan([]));
   }, [today]);
-
-  if (loading) return (
-    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "60vh" }}>
-      <span style={{ color: "var(--color-text-tertiary)", fontFamily: "var(--font-body)", fontSize: "var(--text-14)" }}>Loading…</span>
-    </div>
-  );
 
   return (
     <div style={{ padding: "var(--space-8)" }}>
@@ -57,7 +52,19 @@ export default function Home() {
       }}>
         Today
       </h1>
-      {!todaysPlan.length ? (
+
+      {todaysPlan === null ? (
+        <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-3)" }}>
+          {[1, 2].map(i => (
+            <div key={i} style={{
+              height: 64,
+              borderRadius: "var(--radius-md)",
+              background: "var(--color-bg-elevated)",
+              animation: "pulse 1.5s ease-in-out infinite",
+            }} />
+          ))}
+        </div>
+      ) : !todaysPlan.length ? (
         <p style={{ color: "var(--color-text-secondary)", fontSize: "var(--text-15)" }}>
           Nothing scheduled for today.
         </p>

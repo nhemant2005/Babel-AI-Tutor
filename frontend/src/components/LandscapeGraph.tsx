@@ -1,7 +1,7 @@
 import ReactFlow, { type Node, type Edge, Background, Controls } from "reactflow";
 import "reactflow/dist/style.css";
 import TopicNode from "./TopicNode";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { client } from "../lib/client";
 
 const nodeTypes = { topic: TopicNode };
@@ -42,45 +42,45 @@ export default function LandscapeGraph({ subjectId, onTopicClick, onTopicDelete 
     if (subjectId) load();
   }, [subjectId]);
 
-  const lmByTopic = Object.fromEntries(learnerModel.map((lm: any) => [lm.topic_id, lm]));
-
-  // Layout: group by depth_rank, distribute vertically within each rank
-  const byRank: Record<number, any[]> = {};
-  for (const t of topics) {
-    const rank = t.depth_rank ?? 1;
-    (byRank[rank] ??= []).push(t);
-  }
-
-  const nodes: Node[] = topics.map((topic: any) => {
-    const rank = topic.depth_rank ?? 1;
-    const siblings = byRank[rank] ?? [];
-    const idx = siblings.findIndex((s: any) => s.id === topic.id);
-    const totalInRank = siblings.length;
-    return {
-      id: topic.id,
-      type: "topic",
-      position: {
-        x: (rank - 1) * 240,
-        y: (idx - (totalInRank - 1) / 2) * 110,
-      },
-      data: {
-        label: topic.name,
-        completion_status: lmByTopic[topic.id]?.completion_status ?? "not_started",
-        onClick: (id: string) => onTopicClick(id, topic.name),
-        onDelete: onTopicDelete ? (id: string) => onTopicDelete(id) : undefined,
-      },
-    };
-  });
-
-  const edges: Edge[] = topics.flatMap((topic: any) =>
-    (topic.dependency_ids ?? []).map((depId: string, i: number) => ({
-      id: `${depId}-${topic.id}-${i}`,
-      source: depId,
-      target: topic.id,
-      type: "smoothstep",
-      style: { stroke: "var(--color-border)", strokeWidth: 2 },
-    }))
-  );
+  // Memoize nodes + edges so ReactFlow doesn't re-diff on unrelated renders (#8 fix)
+  const { nodes, edges } = useMemo(() => {
+    const lmByTopic = Object.fromEntries(learnerModel.map((lm: any) => [lm.topic_id, lm]));
+    const byRank: Record<number, any[]> = {};
+    for (const t of topics) {
+      const rank = t.depth_rank ?? 1;
+      (byRank[rank] ??= []).push(t);
+    }
+    const nodes: Node[] = topics.map((topic: any) => {
+      const rank = topic.depth_rank ?? 1;
+      const siblings = byRank[rank] ?? [];
+      const idx = siblings.findIndex((s: any) => s.id === topic.id);
+      const totalInRank = siblings.length;
+      return {
+        id: topic.id,
+        type: "topic",
+        position: {
+          x: (rank - 1) * 240,
+          y: (idx - (totalInRank - 1) / 2) * 110,
+        },
+        data: {
+          label: topic.name,
+          completion_status: lmByTopic[topic.id]?.completion_status ?? "not_started",
+          onClick: (id: string) => onTopicClick(id, topic.name),
+          onDelete: onTopicDelete ? (id: string) => onTopicDelete(id) : undefined,
+        },
+      };
+    });
+    const edges: Edge[] = topics.flatMap((topic: any) =>
+      (topic.dependency_ids ?? []).map((depId: string, i: number) => ({
+        id: `${depId}-${topic.id}-${i}`,
+        source: depId,
+        target: topic.id,
+        type: "smoothstep",
+        style: { stroke: "var(--color-border)", strokeWidth: 2 },
+      }))
+    );
+    return { nodes, edges };
+  }, [topics, learnerModel, onTopicClick, onTopicDelete]);
 
   if (loading) return (
     <div style={containerStyle}>
