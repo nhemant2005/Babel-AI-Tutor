@@ -29,9 +29,13 @@ export default function StudySession() {
         session_type: "return",
       }});
 
+      // Cap instructions to avoid exceeding Lemma's request body limit
+      const rawCtx: string = (ctx as any).context ?? "";
+      const instructions = rawCtx.length > 12000 ? rawCtx.slice(0, 12000) + "\n\n[context truncated]" : rawCtx;
+
       const conv = await client.conversations.create({
         agent_name: "tutor-agent",
-        instructions: (ctx as any).context,
+        instructions,
       });
       setConversationId(conv.id);
     }
@@ -42,11 +46,17 @@ export default function StudySession() {
     if (!sessionId || !conversationId) return;
     try {
       const result = await client.conversations.messages.list(conversationId);
-      const summary = (result.items ?? []).map((m: any) => `${m.role}: ${m.text}`).join("\n");
-      // Call note-banker agent directly — workflow submitForm returns 500 (no CORS on error)
+      const transcript = (result.items ?? []).map((m: any) => `${m.role}: ${m.text}`).join("\n");
+      // Upload transcript to file storage — never send full conversation inline (body size limit)
+      const transcriptBlob = new Blob([transcript], { type: "text/plain" });
+      const transcriptPath = `/subjects/${subjectId}/sessions/${sessionId}/transcript.txt`;
+      try {
+        await client.files.folder.create(sessionId!, { directoryPath: `/subjects/${subjectId}/sessions/` });
+      } catch { /* folder may already exist */ }
+      await client.files.upload(transcriptBlob as File, { name: "transcript.txt", directoryPath: `/subjects/${subjectId}/sessions/${sessionId}/` });
       const conv = await client.conversations.create({ agent_name: "note-banker-agent" });
       await client.conversations.messages.send(conv.id, {
-        content: `session_id: ${sessionId}\ntopic_id: ${topicId}\nsubject_id: ${subjectId}\nexit_type: ${exitType}\n\nConversation summary:\n${summary}`,
+        content: `session_id: ${sessionId}\ntopic_id: ${topicId}\nsubject_id: ${subjectId}\nexit_type: ${exitType}\ntranscript_path: ${transcriptPath}`,
       });
     } catch {
       // Don't block navigation on banking failure

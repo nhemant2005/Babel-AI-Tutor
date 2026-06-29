@@ -139,16 +139,6 @@ function UploadStep({ onSubmit, processing, stage, error, onReset }: {
 
   const canSubmit = name && (text.length > 0 || files.length > 0);
 
-  // Read text-based files into the text content
-  async function readFileText(f: FileItem): Promise<string> {
-    return new Promise((resolve) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(reader.result as string);
-      reader.onerror = () => resolve("");
-      reader.readAsText(f.file);
-    });
-  }
-
   const stages = [
     { key: "creating",    label: "Creating subject..." },
     { key: "uploading",   label: "Uploading files..." },
@@ -280,13 +270,7 @@ function UploadStep({ onSubmit, processing, stage, error, onReset }: {
         disabled={!canSubmit || submitting}
         onClick={async () => {
           setSubmitting(true);
-          // Read text-based file contents and merge with textarea
-          let mergedText = text;
-          for (const f of files) {
-            const content = await readFileText(f);
-            if (content.trim()) mergedText += `\n\n--- ${f.name} ---\n\n${content}`;
-          }
-          await onSubmit({ name, deadline, text: mergedText, files, availableDays: ["monday", "tuesday", "wednesday", "thursday", "friday"], durationMins: 60, priorExp });
+          await onSubmit({ name, deadline, text, files, availableDays: ["monday", "tuesday", "wednesday", "thursday", "friday"], durationMins: 60, priorExp });
         }}
         className="btn-primary"
         style={{ width: "100%", opacity: canSubmit ? 1 : 0.4 }}
@@ -332,9 +316,11 @@ function TrialSessionStep({ subjectId, persona, onComplete }: { subjectId: strin
         session_type: "trial",
         persona,
       }});
+      const rawCtx: string = (ctx as any).context ?? "";
+      const instructions = rawCtx.length > 12000 ? rawCtx.slice(0, 12000) + "\n\n[context truncated]" : rawCtx;
       const conv = await client.conversations.create({
         agent_name: "tutor-agent",
-        instructions: (ctx as any).context,
+        instructions,
       });
       setConversationId(conv.id);
     }

@@ -51,6 +51,12 @@ async def build_session_context(ctx: FunctionContext, data: SessionContextInput)
     except Exception:
         deep_content = topic.get("structural_summary", "")
 
+    # Cap large fields so the assembled context stays under Lemma's request body limit
+    if len(profile) > 3000:
+        profile = profile[-3000:]  # keep most recent session notes
+    if len(deep_content) > 6000:
+        deep_content = deep_content[:6000] + "\n\n[content truncated]"
+
     context = f"""## Tutor Persona
 {soul}
 
