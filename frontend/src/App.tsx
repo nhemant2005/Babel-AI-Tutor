@@ -1,7 +1,6 @@
 import { useEffect } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useAuth } from "lemma-sdk/react";
-import Landing from "./pages/Landing";
 import Onboarding from "./pages/Onboarding";
 import Home from "./pages/Home";
 import Learning from "./pages/Learning";
@@ -45,7 +44,7 @@ export default function App() {
     <BrowserRouter>
       <AuthWall>
         <Routes>
-          <Route path="/" element={<Landing />} />
+          <Route path="/" element={<Navigate to="/home" replace />} />
           <Route path="/onboarding/:step?" element={<Onboarding />} />
           <Route path="/home" element={<Layout><Home /></Layout>} />
           <Route path="/learning" element={<Layout><Learning /></Layout>} />

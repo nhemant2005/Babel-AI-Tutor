@@ -1,14 +1,23 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { client } from "../lib/client";
 
 export default function Home() {
   const today = new Date().toISOString().split("T")[0];
+  const navigate = useNavigate();
   const [todaysPlan, setTodaysPlan] = useState<any[]>([]);
   const [topics, setTopics] = useState<Record<string, any>>({});
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function load() {
+      // Check if user has any subjects — if not, they're new, send to onboarding
+      const subjects = await client.records.list("subjects", { limit: 1 });
+      if (!(subjects?.items ?? []).length) {
+        navigate("/onboarding/upload", { replace: true });
+        return;
+      }
+
       const plan = await client.records.list("plan", {
         filters: [
           { field: "scheduled_date", op: "eq", value: today },
@@ -26,9 +35,16 @@ export default function Home() {
         }));
         setTopics(topicMap);
       }
+      setLoading(false);
     }
-    load().catch(() => {});
+    load().catch(() => setLoading(false));
   }, [today]);
+
+  if (loading) return (
+    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "60vh" }}>
+      <span style={{ color: "var(--color-text-tertiary)", fontFamily: "var(--font-body)", fontSize: "var(--text-14)" }}>Loading…</span>
+    </div>
+  );
 
   return (
     <div style={{ padding: "var(--space-8)" }}>
