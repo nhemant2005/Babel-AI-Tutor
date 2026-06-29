@@ -59,22 +59,31 @@ export default function Onboarding() {
 
         try {
           const rawFolder = `/subjects/${s.id}/raw`;
-          if (files.length > 0) {
-            setStage("uploading");
-            try { await client.files.folder.create("raw", { directoryPath: `/subjects/${s.id}/` }); } catch { /* may already exist */ }
-            for (const f of files) {
-              await client.files.upload(f.file, {
-                name: f.name,
-                directoryPath: rawFolder,
-              });
-            }
+          setStage("uploading");
+          try { await client.files.folder.create("raw", { directoryPath: `/subjects/${s.id}/` }); } catch { /* may already exist */ }
+
+          // Upload binary files
+          for (const f of files) {
+            await client.files.upload(f.file, {
+              name: f.name,
+              directoryPath: rawFolder,
+            });
+          }
+
+          // If user pasted text with no file, save it as a plain text file
+          if (text.trim() && files.length === 0) {
+            const blob = new Blob([text], { type: "text/plain" });
+            await client.files.upload(blob as File, {
+              name: "pasted-material.txt",
+              directoryPath: rawFolder,
+            });
           }
 
           setStage("processing");
-          // Fire ingest agent via conversation (bypasses workflow form-submit 500)
+          // Fire ingest agent — pass only the path, NOT the file content (avoids huge request body)
           const conv = await client.conversations.create({
             agent_name: "ingest-agent",
-            instructions: `Mode: structural\nSubject ID: ${s.id}\nMaterial content: ${text}\nFiles uploaded to: /subjects/${s.id}/raw/\n\nDo your structural pass now.`,
+            instructions: `Mode: structural\nSubject ID: ${s.id}\nFiles are at: ${rawFolder}/\n\nDo your structural pass now.`,
           });
           await client.conversations.messages.send(conv.id, { content: `Process the material for subject ${s.id}. Identify topics, write source notes, and create rows in the topics table.` });
           navigate("/onboarding/persona");
