@@ -87,7 +87,7 @@ export default function ChatWindow({ conversationId, mode }: Props) {
         flexDirection: "column",
         gap: "var(--space-3)",
       }}>
-        {messages.map(m => (
+        {messages.filter(m => !m.text?.startsWith("__SYSTEM__:")).map(m => (
           <div key={m.id} style={{
             alignSelf: m.role === "user" ? "flex-end" : "flex-start",
             background: m.role === "user" ? "var(--color-accent)" : "var(--color-bg-elevated)",

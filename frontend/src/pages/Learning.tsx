@@ -5,12 +5,21 @@ import { client } from "../lib/client";
 export default function Learning() {
   const [subjects, setSubjects] = useState<any[]>([]);
 
-  useEffect(() => {
+  function load() {
     client.records.list("subjects", {
       filters: [{ field: "status", op: "eq", value: "active" }],
       limit: 20,
     }).then((r: any) => setSubjects(r?.items ?? [])).catch(() => {});
-  }, []);
+  }
+
+  useEffect(load, []);
+
+  async function deleteSubject(e: React.MouseEvent, id: string) {
+    e.preventDefault();
+    if (!confirm("Delete this subject? This cannot be undone.")) return;
+    await client.records.delete("subjects", id);
+    setSubjects(prev => prev.filter(s => s.id !== id));
+  }
 
   return (
     <div style={{ padding: "var(--space-8)" }}>
@@ -25,36 +34,58 @@ export default function Learning() {
       </h1>
       <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-3)" }}>
         {subjects.map((s: any) => (
-          <Link
-            key={s.id}
-            to={`/subjects/${s.id}`}
-            style={{
-              display: "block",
-              padding: "var(--space-4) var(--space-5)",
-              background: "var(--color-bg-surface)",
-              borderLeft: `4px solid ${s.color ?? "var(--color-accent)"}`,
-              borderTop: "1px solid var(--color-border)",
-              borderRight: "1px solid var(--color-border)",
-              borderBottom: "1px solid var(--color-border)",
-              borderRadius: "var(--radius-md)",
-              transition: "border-color 150ms var(--ease-out)",
-            }}
-          >
-            <h2 style={{
-              fontFamily: "var(--font-display)",
-              fontSize: "var(--text-16)",
-              fontWeight: "var(--weight-display-medium)",
-              color: "var(--color-text-primary)",
-              margin: 0,
-            }}>
-              {s.name}
-            </h2>
-            {s.deadline && (
-              <p style={{ marginTop: "var(--space-1)", fontSize: "var(--text-13)", color: "var(--color-text-tertiary)" }}>
-                Due: {s.deadline}
-              </p>
-            )}
-          </Link>
+          <div key={s.id} style={{ position: "relative" }}>
+            <Link
+              to={`/subjects/${s.id}`}
+              style={{
+                display: "block",
+                padding: "var(--space-4) var(--space-5)",
+                paddingRight: "var(--space-10)",
+                background: "var(--color-bg-surface)",
+                borderLeft: `4px solid ${s.color ?? "var(--color-accent)"}`,
+                borderTop: "1px solid var(--color-border)",
+                borderRight: "1px solid var(--color-border)",
+                borderBottom: "1px solid var(--color-border)",
+                borderRadius: "var(--radius-md)",
+                transition: "border-color 150ms var(--ease-out)",
+              }}
+            >
+              <h2 style={{
+                fontFamily: "var(--font-display)",
+                fontSize: "var(--text-16)",
+                fontWeight: "var(--weight-display-medium)",
+                color: "var(--color-text-primary)",
+                margin: 0,
+              }}>
+                {s.name}
+              </h2>
+              {s.deadline && (
+                <p style={{ marginTop: "var(--space-1)", fontSize: "var(--text-13)", color: "var(--color-text-tertiary)" }}>
+                  Due: {s.deadline}
+                </p>
+              )}
+            </Link>
+            <button
+              onClick={e => deleteSubject(e, s.id)}
+              title="Delete subject"
+              style={{
+                position: "absolute",
+                right: "var(--space-3)",
+                top: "50%",
+                transform: "translateY(-50%)",
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                color: "var(--color-text-tertiary)",
+                fontSize: "var(--text-16)",
+                lineHeight: 1,
+                padding: "var(--space-1)",
+                borderRadius: "var(--radius-sm)",
+              }}
+            >
+              ✕
+            </button>
+          </div>
         ))}
       </div>
       <Link

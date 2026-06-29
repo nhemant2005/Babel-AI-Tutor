@@ -9,9 +9,10 @@ const nodeTypes = { topic: TopicNode };
 interface LandscapeGraphProps {
   subjectId: string;
   onTopicClick: (topicId: string, topicName: string) => void;
+  onTopicDelete?: (topicId: string) => void;
 }
 
-export default function LandscapeGraph({ subjectId, onTopicClick }: LandscapeGraphProps) {
+export default function LandscapeGraph({ subjectId, onTopicClick, onTopicDelete }: LandscapeGraphProps) {
   const [topics, setTopics] = useState<any[]>([]);
   const [learnerModel, setLearnerModel] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -66,6 +67,7 @@ export default function LandscapeGraph({ subjectId, onTopicClick }: LandscapeGra
         label: topic.name,
         completion_status: lmByTopic[topic.id]?.completion_status ?? "not_started",
         onClick: (id: string) => onTopicClick(id, topic.name),
+        onDelete: onTopicDelete ? (id: string) => onTopicDelete(id) : undefined,
       },
     };
   });
