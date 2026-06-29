@@ -15,11 +15,24 @@ export default function ChatWindow({ conversationId, mode }: Props) {
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    if (!conversationId) return;
+    let cancelled = false;
+
     async function load() {
-      const result = await client.conversations.messages.list(conversationId);
-      setMessages((result.items ?? []) as unknown as Message[]);
+      // Poll until the agent sends its first message (handles tutor-initiated sessions)
+      for (let i = 0; i < 30; i++) {
+        const result = await client.conversations.messages.list(conversationId);
+        const items = (result.items ?? []) as unknown as Message[];
+        if (cancelled) return;
+        setMessages(items);
+        // Stop polling once we have an agent message
+        if (items.some(m => m.role !== "user")) break;
+        await new Promise(r => setTimeout(r, 2000));
+      }
     }
-    if (conversationId) load();
+
+    load().catch(console.error);
+    return () => { cancelled = true; };
   }, [conversationId]);
 
   useEffect(() => {

@@ -37,6 +37,10 @@ export default function StudySession() {
         agent_name: "tutor-agent",
         instructions,
       });
+      // Tutor always speaks first
+      await client.conversations.messages.send(conv.id, {
+        content: "__SYSTEM__: Begin the session. Start with a brief recall check on prior sessions if any, then move into today's topic.",
+      });
       setConversationId(conv.id);
     }
     init().catch(console.error);

@@ -16,7 +16,7 @@ export default function Onboarding() {
   const { step = "upload" } = useParams<{ step?: string }>();
   const navigate = useNavigate();
   const [subjectId, setSubjectId] = useState<string | null>(
-    () => sessionStorage.getItem("onboarding_subject_id")
+    () => localStorage.getItem("onboarding_subject_id")
   );
   const [persona, setPersona] = useState<"socratic" | "example_first">("socratic");
   const [error, setError] = useState<string | null>(null);
@@ -24,8 +24,16 @@ export default function Onboarding() {
   const { subject, createRecord, refresh } = useSubject(subjectId);
 
   useEffect(() => {
-    if (subjectId) sessionStorage.setItem("onboarding_subject_id", subjectId);
+    if (subjectId) {
+      localStorage.setItem("onboarding_subject_id", subjectId);
+      refresh(); // fetch subject state on mount / subjectId change
+    }
   }, [subjectId]);
+
+  // If subject already active, skip onboarding
+  useEffect(() => {
+    if (subject?.status === "active") navigate("/learning");
+  }, [subject?.status]);
 
   useEffect(() => {
     if (subject?.status !== "processing") return;
@@ -38,7 +46,7 @@ export default function Onboarding() {
       processing={subject?.status === "processing"}
       stage={stage}
       error={error}
-      onReset={() => { setSubjectId(null); setError(null); setStage(null); sessionStorage.removeItem("onboarding_subject_id"); }}
+      onReset={() => { setSubjectId(null); setError(null); setStage(null); localStorage.removeItem("onboarding_subject_id"); }}
       onSubmit={async ({ name, deadline, text, files, availableDays, durationMins, priorExp }) => {
         setError(null);
         setStage("creating");
@@ -115,7 +123,7 @@ export default function Onboarding() {
   if (step === "landscape") return (
     <LandscapeRevealStep
       subjectId={subjectId!}
-      onDone={() => navigate("/home")}
+      onDone={() => { localStorage.removeItem("onboarding_subject_id"); navigate("/home"); }}
     />
   );
 
@@ -321,6 +329,10 @@ function TrialSessionStep({ subjectId, persona, onComplete }: { subjectId: strin
       const conv = await client.conversations.create({
         agent_name: "tutor-agent",
         instructions,
+      });
+      // Kick off the agent — trial sessions are tutor-initiated
+      await client.conversations.messages.send(conv.id, {
+        content: "__SYSTEM__: Begin the trial session now. Orient the student with the material, then engage them, then end with something that makes them want to learn more. You speak first.",
       });
       setConversationId(conv.id);
     }
